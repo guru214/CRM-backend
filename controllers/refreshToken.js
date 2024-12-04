@@ -1,0 +1,40 @@
+import jwt from 'jsonwebtoken';
+
+const RefreshToken = async (req, res) => {
+  try {
+    // Make sure you are using cookie-parser and accessing req.cookies
+    const { refreshToken } = req.cookies;
+
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Refresh token is required" });
+    }
+
+    // Verify the refresh token
+    jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, async (err, decoded) => {
+      if (err) {
+        return res.status(403).json({ message: "Invalid or expired refresh token" });
+      }
+
+      const { userId } = decoded;
+
+      // Generate a new access token
+      const newAccessToken = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "15m" });
+
+      // Set the new access token as a cookie
+      res.cookie("accessToken", newAccessToken, {
+        httpOnly: true,
+        secure: false, // Set to `true` in production if using HTTPS
+        maxAge: 15 * 60 * 1000, // 15 minutes
+      });
+
+      res.status(200).json({ message: "Access token refreshed", accessToken: newAccessToken });
+    });
+  } catch (error) {
+    console.error("Error during token refresh:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
+export default RefreshToken;
