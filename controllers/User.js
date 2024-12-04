@@ -238,7 +238,7 @@ const Profile = async (req, res) => {
            documentNumber = COALESCE(?, documentNumber) 
          WHERE id = ?`;
 
-       // Execute the query
+       // Execute the query schema
        const [result] = await mySqlPool.query(query, [
          updates.FullName,
          updates.Phone,
