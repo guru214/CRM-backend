@@ -2,8 +2,10 @@ import jwt from "jsonwebtoken";
 import mySqlPool from "../config/db.js";
 import dotenv from "dotenv";
 import bcrypt from 'bcrypt';
-import { encrypt, decrypt } from "../middleware/encryptDecrypt.js";
+import { encrypt, decrypt} from "../middleware/encryptDecrypt.js";
+import { encryptPassword, decryptPassword, generateRandomString} from "../middleware/encryptDecryptPassword.js" 
 import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 
 dotenv.config(); // Load environment variables
 
@@ -102,7 +104,15 @@ const Register = async (req, res) => {
 
     // Encrypt user data
     const encryptedUserData = encryptUserData({ FullName, Email, Phone, Account_Type, Address, documentType, documentNumber });
-    const hashedPassword = await bcrypt.hash(Password, 10);
+    const randomStringOne = generateRandomString(5);
+    const randomStringTwo = generateRandomString(10);
+
+    const iv = crypto.randomBytes(12).toString('hex');  
+    console.log(iv);
+    const securedIv = randomStringOne + iv + randomStringTwo;
+    console.log(securedIv);
+    const encryptedPassword = encryptPassword(Password,iv)
+    console.log("encrypted password",encryptedPassword);
 
     // Generate unique AccountID and ReferralID
     const AccountID = await generateUniqueAccountID();
@@ -110,9 +120,9 @@ const Register = async (req, res) => {
 
     // Insert new user into the database
     const [result] = await mySqlPool.query(
-      `INSERT INTO users (FullName, Email, Password, Phone, Account_Type, Address, documentType, documentNumber, AccountID, ReferralID) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [encryptedUserData.FullName, Email, hashedPassword, encryptedUserData.Phone, encryptedUserData.Account_Type, encryptedUserData.Address, encryptedUserData.documentType, encryptedUserData.documentNumber, AccountID, ReferralID]
+      `INSERT INTO users (FullName, Email, Password, Phone, Account_Type, Address, documentType, documentNumber, AccountID, ReferralID, iv) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [encryptedUserData.FullName, Email, encryptedPassword, encryptedUserData.Phone, encryptedUserData.Account_Type, encryptedUserData.Address, encryptedUserData.documentType, encryptedUserData.documentNumber, AccountID, ReferralID, securedIv]
     );
 
     if (result.affectedRows > 0) {
@@ -144,15 +154,18 @@ const Login = async (req, res) => {
     const [rows] = await connection.query("SELECT * FROM users WHERE Email = ?", [Email]);
     const Finduser = rows[0];
     console.log(Finduser)
-
     if (!Finduser) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
+    const realIv = Finduser.iv.substring(5,29)
+    const encryptedPass = encryptPassword(Password, realIv);
+    const storedPassword = Finduser.Password;
+    console.log("this is the encrypted password",realIv);
+    console.log("this is the stored password", storedPassword);
 
-    // Compare the provided password with the hashed password stored in the database
-    const isPasswordValid = await bcrypt.compare(Password, Finduser.Password);
-    if (!isPasswordValid) {
+    if ( encryptedPass !== storedPassword){
       return res.status(401).json({ message: "Invalid email or password" });
+
     }
 
     const { accessToken, refreshToken } = generateTokens(Finduser.id);

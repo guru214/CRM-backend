@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS server_crm.users (
   Address VARCHAR(600),
   amount DECIMAL(15, 2) DEFAULT 0.00, 
   token TEXT NULL,
+  iv VARCHAR(600) not null,
   documentType VARCHAR(600)  DEFAULT 'pending',
   documentNumber VARCHAR(600)  DEFAULT 'pending',
   submissionDate DATETIME,
