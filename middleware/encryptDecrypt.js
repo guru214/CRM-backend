@@ -1,4 +1,4 @@
-import crypto from 'crypto'
+import crypto from 'crypto';
 import dotenv from "dotenv";
 
 dotenv.config(); // Load environment variables
@@ -23,7 +23,8 @@ const decrypt = (encryptedText) => {
       console.log(ivHex);
       console.log(authTagHex)
       console.log(encryptedData)
-      throw new Error('Invalid encrypted text format'); } 
+      throw new Error('Invalid encrypted text format'); 
+    } 
       const iv = Buffer.from(ivHex, 'hex'); 
       const authTag = Buffer.from(authTagHex, 'hex'); 
       const decipher = crypto.createDecipheriv(algorithm, secretKey, iv); 

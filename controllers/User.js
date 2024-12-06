@@ -129,6 +129,7 @@ const Register = async (req, res) => {
 
 // Login function
 const Login = async (req, res) => {
+  let connection;
   try {
     const { Email, Password } = req.body;
 
@@ -137,8 +138,10 @@ const Login = async (req, res) => {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
+    connection = await mySqlPool.getConnection();
+
     // Check if the user exists in the database
-    const [rows] = await mySqlPool.query("SELECT * FROM users WHERE Email = ?", [Email]);
+    const [rows] = await connection.query("SELECT * FROM users WHERE Email = ?", [Email]);
     const Finduser = rows[0];
     console.log(Finduser)
 
@@ -152,7 +155,6 @@ const Login = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // Generate both access and refresh tokens
     const { accessToken, refreshToken } = generateTokens(Finduser.id);
 
     // Store the refresh token in the database (e.g., update user record with refresh token)
@@ -171,11 +173,8 @@ const Login = async (req, res) => {
       secure: false, // Set to `true` in production if using HTTPS
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
-
-    // Decrypt user data before sending the response
     const decryptedUserData = decryptUserData(Finduser);
 
-    // Respond with success and return the user data and tokens
     return res.status(200).json({
       message: "Login successful",
       user: decryptedUserData,
@@ -185,7 +184,9 @@ const Login = async (req, res) => {
   } catch (error) {
     console.error("Error during user login:", error);
     return res.status(500).json({ message: "Internal server error" });
-  }
+  }finally { 
+    if (connection) connection.release();
+}
 };
 
 // Profile function
@@ -223,8 +224,8 @@ const Profile = async (req, res) => {
    // Update Profile function
    const UpdateProfile = async (req, res) => {
      try {
-       const id  = req.user.userId; // Get user ID from request parameters
-       const updates = encryptUserData(req.body); // Encrypt updates from request body
+       const id  = req.user.userId; 
+       const updates = encryptUserData(req.body); 
 
        // Build the query
        const query = `

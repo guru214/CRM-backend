@@ -22,10 +22,10 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 
-//routes
-app.get('/test', (req, res) => {
-  res.status(200).send('<h1> HIII </h1>')
-});
+// //routes
+// app.get('/test', (req, res) => {
+//   res.status(200).send('<h1> HIII </h1>')
+// });
 
 
 app.use('/api/v1/auth', AuthRoutes);

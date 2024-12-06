@@ -1,4 +1,4 @@
-import { encrypt, decrypt } from '../middleware/encryptDecrypt.js'; // Adjust the path as necessary
+// import { encrypt, decrypt } from '../middleware/encryptDecrypt.js'; 
 import mySqlPool from "../config/db.js";
 
 // Function to handle image upload and encryption
