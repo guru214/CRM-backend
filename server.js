@@ -8,6 +8,8 @@ import WithdrawDetails from './routes/WithdrawDetails.js';
 import ReqWithdraw from './routes/ReqWithdraw.js';
 import ReqDeposit from './routes/ReqDeposit.js';
 import Refresh from './routes/refreshToken.js';
+import cors from 'cors';
+
 
 const app = express();
 
@@ -18,6 +20,12 @@ const PORT = process.env.PORT || 4040;
 app.use(cookieParser());
 app.use(morgan('dev'));
 app.use(express.json());
+
+app.use(cors({
+  origin: 'http://localhost:3000', // Allow only the frontend URL
+  // methods: 'GET, POST, PUT, DELETE',
+  credentials: true,
+}));
 
 // Routes
 app.use('/api/v1/auth', AuthRoutes);

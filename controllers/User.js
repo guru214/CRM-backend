@@ -272,8 +272,11 @@ const Profile = async (req, res) => {
    // Update Profile function
    const UpdateProfile = async (req, res) => {
     try {
-      const id = req.user.userId; // Extract the user ID from the request
+      const id = req.user.userId; // Ensure this comes from JWT middleware
       const updates = encryptUserData(req.body); // Encrypt incoming data
+  
+      console.log('Updating user with ID:', id);
+      console.log('Updates:', updates);
   
       // Update the user's profile with the provided data
       const [affectedRows] = await User.update(
@@ -291,7 +294,6 @@ const Profile = async (req, res) => {
         }
       );
   
-      // Check if any rows were affected
       if (affectedRows === 0) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -312,7 +314,6 @@ const Profile = async (req, res) => {
         ],
       });
   
-      // Decrypt user data before sending the response
       const decryptedUpdatedUserData = decryptUserData(updatedUser.toJSON());
   
       return res.json({ message: "Profile updated successfully", user: decryptedUpdatedUserData });
@@ -518,14 +519,14 @@ const Logout = async (req, res) => {
       return res.status(401).json({ message: "Invalid token" });
     }
 
-    // Find the user and clear the refresh token
-    const user = await User.findByPk(decoded.userId);
-    if (!user) {
+    // Find the user using the decoded user ID from the refresh token
+    const Finduser = await User.findOne({ where: { id: decoded.userId } });
+    if (!Finduser) {
       return res.status(404).json({ message: "User not found" });
     }
 
     // Update the user's refresh token to NULL
-    await user.update({ refreshToken: null });
+    await Finduser.update({ refreshToken: null });
 
     // Clear cookies
     res.clearCookie("accessToken");
@@ -537,5 +538,6 @@ const Logout = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 export { Register, Login, Profile, UpdateProfile, ChangePassword, ForgetPassword,ResetPassword, KYCUpdate, Logout };
 
