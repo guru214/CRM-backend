@@ -1,16 +1,20 @@
-import mysql from 'mysql2/promise';
 
-const mySqlPool = mysql.createPool({
-  host: 'localhost',          // Your MySQL host
-  user: 'root',          // Your MySQL user
-  password: 'Npminit@12', //anwaar
-  // password: 'SHA#1113#sha',  //sohail
-  //password:'Sainaidu#2000', //Sailakshmi
-  database: 'server_crm', //anwaar
-  // database: 'user_db',
-  port: 3300
-  //port:3306
-  // port: 5000 //sohail
-});
+import { Sequelize } from 'sequelize';
+import dotenv from 'dotenv';
 
-export default mySqlPool;
+dotenv.config(); // Load environment variables
+
+// Create Sequelize instance
+const sequelize = new Sequelize(
+  "server_crm", 
+  "root", 
+  "SHA#1113#sha", 
+  {
+    host:  'localhost',
+    dialect: 'mysql',
+    port:  5000,
+  }
+);
+
+// Export the sequelize instance for use in models and other files
+export default sequelize;
