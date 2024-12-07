@@ -1,15 +1,16 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
+import mongoose from 'mongoose';
+import AuthRoutes from './routes/UserRoutes.js';
+import WithdrawDetails from './routes/WithdrawDetailsRoutes.js';
+import ReqWithdraw from './routes/ReqWithdrawRoutes.js';
+import ReqDeposit from './routes/ReqDepositRoutes.js';
 import cookieParser from 'cookie-parser';
-import sequelize from './config/db.js';  // Import the Sequelize instance
-import AuthRoutes from './routes/User.js';
-import WithdrawDetails from './routes/WithdrawDetails.js';
-import ReqWithdraw from './routes/ReqWithdraw.js';
-import ReqDeposit from './routes/ReqDeposit.js';
-import Refresh from './routes/refreshToken.js';
+import Refresh from './routes/refreshTokenRoute.js';
+// import logger from './loggers.js/log.js';
 import cors from 'cors';
-
+import sequelize from './config/db.js';  // Import the Sequelize instance
 
 const app = express();
 
@@ -45,15 +46,31 @@ sequelize
   });
   sequelize.sync();
 
+// MongoDB connection
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URL, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('MongoDB connected successfully');
+  } catch (err) {
+    console.error('MongoDB connection error:', err.message);
+    process.exit(1); // Exit process if connection fails
+  }
+};
+
+// Call the connectDB function to establish the database connection
+connectDB();
 
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send({ message: 'Something went wrong!' });
+  res.status(500).send({ message: "Something went wrong!" });
 });
 
-// Start the server
+// Listen to the server after DB connection
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
