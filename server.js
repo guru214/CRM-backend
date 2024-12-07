@@ -2,12 +2,12 @@ import express from 'express';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
 import mySqlPool from './config/db.js';
-import AuthRoutes from './routes/User.js';
-import WithdrawDetails from './routes/WithdrawDetails.js';
-import ReqWithdraw from './routes/ReqWithdraw.js';
-import ReqDeposit from './routes/ReqDeposit.js';
+import AuthRoutes from './routes/UserRoutes.js';
+import WithdrawDetails from './routes/WithdrawDetailsRoutes.js';
+import ReqWithdraw from './routes/ReqWithdrawRoutes.js';
+import ReqDeposit from './routes/ReqDepositRoutes.js';
 import cookieParser from 'cookie-parser';
-import Refresh from './routes/refreshToken.js';
+import Refresh from './routes/refreshTokenRoute.js';
 // import logger from './loggers.js/log.js';
 
 const app = express();

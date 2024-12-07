@@ -9,7 +9,7 @@ import {
   ForgetPassword,
   ResetPassword,
   KYCUpdate,
-} from "../controllers/User.js"; // Adjust the path to your controller file
+} from "../controllers/UserControllers.js"; // Adjust the path to your controller file
 import verifyToken from "../middleware/verifyToken.js";
 const router = express.Router();
 

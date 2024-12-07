@@ -4,7 +4,7 @@ import {
   updateWithdrawRequest,
   getWithdrawRequests,
   deleteWithdrawRequest,
-} from "../controllers/ReqWithdraw.js";
+} from "../controllers/ReqWithdrawControllers.js";
 import verifyToken from "../middleware/verifyToken.js";
 
 const router = express.Router();

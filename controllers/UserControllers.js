@@ -2,8 +2,10 @@ import jwt from "jsonwebtoken";
 import mySqlPool from "../config/db.js";
 import dotenv from "dotenv";
 import bcrypt from 'bcrypt';
-import { encrypt, decrypt} from "../middleware/encryptDecrypt.js";
-import { encryptPassword, decryptPassword, generateRandomString} from "../middleware/encryptDecryptPassword.js" 
+import { encrypt, decrypt} from "../lib/encryptDecrypt.js";
+import { generateAccountID, generateReferralID } from "../lib/uidGeneration.js";
+import { RESPONSE_MESSAGES } from "../lib/constants.js";
+import { encryptPassword, decryptPassword, generateRandomString} from "../lib/encryptDecryptPassword.js" 
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
@@ -40,56 +42,6 @@ const decryptUserData = (encryptedData) => {
   };
 };
 
-// Generate Account ID: Random 12 digits starting with "10"
-const generateAccountID = () => {
-  const randomDigits = Math.floor(100000000 + Math.random() * 900000000); // 9 random digits
-  return `10${randomDigits}`; // Prefix "10"
-};
-
-// Generate Referral ID: First 2 letters of FullName + 4 random numbers + Last 2 letters of FullName
-const generateReferralID = (fullName) => {
-  const sanitizedFullName = fullName.replace(/\s+/g, ""); // Remove spaces if any
-  if (sanitizedFullName.length < 4) {
-    throw new Error("Full name must be at least 4 characters long");
-  }
-  const firstFour = sanitizedFullName.substring(0, 4).toUpperCase(); // First 4 letters
-  // const lastTwo = sanitizedFullName.substring(sanitizedFullName.length - 2).toUpperCase(); // Last 2 letters
-  const randomNumbers = Math.floor(1000 + Math.random() * 9000); // 4 random digits
-  return `${firstFour}${randomNumbers}`;
-};
-
-// Generate unique Account ID
-const generateUniqueAccountID = async () => {
-  let isUnique = false;
-  let accountID;
-
-  while (!isUnique) {
-    accountID = generateAccountID(); // Call the Account ID generator
-    const [rows] = await mySqlPool.query("SELECT COUNT(*) AS count FROM users WHERE AccountID = ?", [accountID]);
-    if (rows[0].count === 0) {
-      isUnique = true; // No duplicate found
-    }
-  }
-
-  return accountID;
-};
-
-// Generate unique Referral ID
-const generateUniqueReferralID = async (fullName) => {
-  let isUnique = false;
-  let referralID;
-
-  while (!isUnique) {
-    referralID = generateReferralID(fullName); // Call the Referral ID generator
-    const [rows] = await mySqlPool.query("SELECT COUNT(*) AS count FROM users WHERE ReferralID = ?", [referralID]);
-    if (rows[0].count === 0) {
-      isUnique = true; // No duplicate found
-    }
-  }
-
-  return referralID;
-};
-
 
 // Register function
 const Register = async (req, res) => {
@@ -99,7 +51,7 @@ const Register = async (req, res) => {
     // Check if the user already exists in the database
     const [existingUser] = await mySqlPool.query("SELECT * FROM users WHERE Email = ?", [Email]);
     if (existingUser.length > 0) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({ message: RESPONSE_MESSAGES.ALREADY_EXIST.message });
     }
 
     // Encrypt user data
@@ -115,8 +67,8 @@ const Register = async (req, res) => {
     console.log("encrypted password",encryptedPassword);
 
     // Generate unique AccountID and ReferralID
-    const AccountID = await generateUniqueAccountID();
-    const ReferralID = await generateUniqueReferralID(FullName);
+    const AccountID = await generateAccountID();
+    const ReferralID = await generateReferralID(FullName);
 
     // Insert new user into the database
     const [result] = await mySqlPool.query(
@@ -126,13 +78,13 @@ const Register = async (req, res) => {
     );
 
     if (result.affectedRows > 0) {
-      res.status(201).json({ message: "User registered successfully", AccountID, ReferralID });
+      res.status(201).json({ message: RESPONSE_MESSAGES.REG_SUCCESS.message });
     } else {
-      res.status(500).json({ message: "Failed to register user" });
+      res.status(500).json({ message: RESPONSE_MESSAGES.ERROR.message });
     }
   } catch (error) {
     console.error("Error during user registration:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: RESPONSE_MESSAGES.SERVER_ERROR.message });
   }
 };
 
@@ -145,7 +97,7 @@ const Login = async (req, res) => {
 
     // Check if email and password are provided
     if (!Email || !Password) {
-      return res.status(400).json({ message: "Email and password are required" });
+      return res.status(400).json({ message: RESPONSE_MESSAGES.BAD_REQUEST.message });
     }
 
     connection = await mySqlPool.getConnection();
@@ -164,7 +116,7 @@ const Login = async (req, res) => {
     console.log("this is the stored password", storedPassword);
 
     if ( encryptedPass !== storedPassword){
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res.status(401).json({ message: RESPONSE_MESSAGES.INVALID.message });
 
     }
 
@@ -447,7 +399,6 @@ const ResetPassword = async (req, res, next) => {
       }
   }
 };
-
 
 // Logout Function
 const Logout = async (req, res) => {

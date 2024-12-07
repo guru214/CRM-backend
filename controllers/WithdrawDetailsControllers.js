@@ -1,6 +1,6 @@
 import mySqlPool from "../config/db.js";
 import dotenv from "dotenv";
-import { encrypt, decrypt } from "../middleware/encryptDecrypt.js";
+import { encrypt, decrypt } from "../lib/encryptDecrypt.js";
 dotenv.config(); // Load environment variables
 
 // Function to encrypt withdraw modes data

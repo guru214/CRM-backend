@@ -15,7 +15,6 @@ const verifyToken = (req, res, next) => {
         return res.status(403).json({ message: "Invalid or expired access token" });
       }
 
-      // Attach the decoded user info to the request
       req.user = decoded; // Contains `userId` or other payload data
       next();
     });

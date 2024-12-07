@@ -1,6 +1,6 @@
 // depositRoutes.js
 import express from 'express';
-import { submitDepositRequest, listDepositRequests } from '../controllers/ReqDeposit.js'; // Adjust the path as necessary
+import { submitDepositRequest, listDepositRequests } from '../controllers/ReqDepositControllers.js'; // Adjust the path as necessary
 import verifyToken from '../middleware/verifyToken.js'; // Adjust the path as necessary
 
 const router = express.Router();
