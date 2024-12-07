@@ -9,6 +9,8 @@ import ReqDeposit from './routes/ReqDepositRoutes.js';
 import cookieParser from 'cookie-parser';
 import Refresh from './routes/refreshTokenRoute.js';
 // import logger from './loggers.js/log.js';
+import cors from 'cors';
+import sequelize from './config/db.js';  // Import the Sequelize instance
 
 const app = express();
 
@@ -20,12 +22,29 @@ app.use(cookieParser());
 app.use(morgan('dev'));
 app.use(express.json());
 
+app.use(cors({
+  origin: 'http://localhost:3000', // Allow only the frontend URL
+  // methods: 'GET, POST, PUT, DELETE',
+  credentials: true,
+}));
+
 // Routes
 app.use('/api/v1/auth', AuthRoutes);
 app.use('/api/v1', Refresh);
 app.use('/api/v1/withdraw', WithdrawDetails);
 app.use('/api/v1/withdraw', ReqWithdraw);
 app.use('/api/v1/deposit', ReqDeposit);
+
+// Condition to connect to the database and then start the server
+sequelize
+  .authenticate()
+  .then(() => {
+    console.log('Database connected successfully with Sequelize');
+  })
+  .catch((err) => {
+    console.error('Unable to connect to the database:', err);
+  });
+  sequelize.sync();
 
 // MongoDB connection
 const connectDB = async () => {

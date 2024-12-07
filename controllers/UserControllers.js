@@ -1,3 +1,4 @@
+
 import jwt from "jsonwebtoken";
 import mySqlPool from '../config/db.js';
 import dotenv from "dotenv";
@@ -7,6 +8,7 @@ import { generateAccountID, generateReferralID } from "../lib/uidGeneration.js";
 import { RESPONSE_MESSAGES } from "../lib/constants.js";
 import { encryptPassword, decryptPassword, generateRandomString} from "../lib/encryptDecryptPassword.js" 
 import nodemailer from 'nodemailer';
+import User from "../models/User.js";
 import crypto from 'crypto';
 
 dotenv.config(); // Load environment variables
@@ -49,9 +51,9 @@ const Register = async (req, res) => {
     const { FullName, Email, Password, Phone, Account_Type, Address, documentType, documentNumber } = req.body;
 
     // Check if the user already exists in the database
-    const [existingUser] = await mySqlPool.query("SELECT * FROM users WHERE Email = ?", [Email]);
-    if (existingUser.length > 0) {
-      return res.status(400).json({ message: RESPONSE_MESSAGES.ALREADY_EXIST.message });
+    const existingUser = await User.findOne({ where: { Email } });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
     }
 
     // Encrypt user data
@@ -71,27 +73,52 @@ const Register = async (req, res) => {
     const ReferralID = await generateReferralID(FullName);
 
     // Insert new user into the database
-    const [result] = await mySqlPool.query(
-      `INSERT INTO users (FullName, Email, Password, Phone, Account_Type, Address, documentType, documentNumber, AccountID, ReferralID, iv) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [encryptedUserData.FullName, Email, encryptedPassword, encryptedUserData.Phone, encryptedUserData.Account_Type, encryptedUserData.Address, encryptedUserData.documentType, encryptedUserData.documentNumber, AccountID, ReferralID, securedIv]
-    );
+    // const [result] = await mySqlPool.query(
+    //   `INSERT INTO users (FullName, Email, Password, Phone, Account_Type, Address, documentType, documentNumber, AccountID, ReferralID, iv) 
+    //    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    //   [encryptedUserData.FullName, Email, encryptedPassword, encryptedUserData.Phone, encryptedUserData.Account_Type, encryptedUserData.Address, encryptedUserData.documentType, encryptedUserData.documentNumber, AccountID, ReferralID, securedIv]
+    // );
 
-    if (result.affectedRows > 0) {
-      res.status(201).json({ message: RESPONSE_MESSAGES.REG_SUCCESS.message });
-    } else {
-      res.status(500).json({ message: RESPONSE_MESSAGES.ERROR.message });
-    }
-  } catch (error) {
-    console.error("Error during user registration:", error);
-    res.status(500).json({ message: RESPONSE_MESSAGES.SERVER_ERROR.message });
-  }
+    const newUser = await User.create({
+      FullName: encryptedUserData.FullName,
+      Email: Email, // Email is not encrypted for uniqueness checks
+      Password: encryptedPassword,
+      Phone: encryptedUserData.Phone,
+      Account_Type: encryptedUserData.Account_Type,
+      Address: encryptedUserData.Address,
+      documentType: encryptedUserData.documentType,
+      documentNumber: encryptedUserData.documentNumber,
+      AccountID,
+      ReferralID,
+      iv: securedIv,
+    });
+
+
+//     if (result.affectedRows > 0) {
+//       res.status(201).json({ message: "User registered successfully", AccountID, ReferralID });
+//     } else {
+//       res.status(500).json({ message: "Failed to register user" });
+//     }
+//   } catch (error) {
+//     console.error("Error during user registration:", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+if (newUser) {
+  res.status(201).json({ message: "User registered successfully", AccountID, ReferralID });
+} else {
+  res.status(500).json({ message: "Failed to register user" });
+}
+} catch (error) {
+console.error("Error during user registration:", error);
+res.status(500).json({ message: "Internal server error" });
+}
 };
 
 
 // Login function
+
 const Login = async (req, res) => {
-  let connection;
   try {
     const { Email, Password } = req.body;
 
@@ -100,36 +127,35 @@ const Login = async (req, res) => {
       return res.status(400).json({ message: RESPONSE_MESSAGES.BAD_REQUEST.message });
     }
 
-    connection = await mySqlPool.getConnection();
-
-    // Check if the user exists in the database
-    const [rows] = await connection.query("SELECT * FROM users WHERE Email = ?", [Email]);
-    const Finduser = rows[0];
-    console.log(Finduser)
+    // Find the user by email using Sequelize
+    const Finduser = await User.findOne({ where: { Email } });
     if (!Finduser) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
-    const realIv = Finduser.iv.substring(5,29)
+
+    const realIv = Finduser.iv.substring(5, 29); // Extract the IV from stored data
     const encryptedPass = encryptPassword(Password, realIv);
     const storedPassword = Finduser.Password;
-    console.log("this is the encrypted password",realIv);
-    console.log("this is the stored password", storedPassword);
 
     if ( encryptedPass !== storedPassword){
       return res.status(401).json({ message: RESPONSE_MESSAGES.INVALID.message });
 
     }
 
+    // Generate tokens
     const { accessToken, refreshToken } = generateTokens(Finduser.id);
 
-    // Store the refresh token in the database (e.g., update user record with refresh token)
-    await mySqlPool.query("UPDATE users SET refreshToken = ? WHERE id = ?", [refreshToken, Finduser.id]);
+    // Update the refresh token in the database
+    await User.update(
+      { refreshToken },
+      { where: { id: Finduser.id } }
+    );
 
     // Set the access token as a cookie (HTTP-only cookie for security)
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: false, // Set to `true` in production if using HTTPS
-      maxAge: 15 * 60 * 1000, // 15 minutes
+      maxAge: 50 * 60 * 1000, // 50 minutes
     });
 
     // Optionally, set the refresh token as a cookie (HTTP-only cookie for security)
@@ -138,6 +164,8 @@ const Login = async (req, res) => {
       secure: false, // Set to `true` in production if using HTTPS
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
+
+    // Decrypt user data if necessary
     const decryptedUserData = decryptUserData(Finduser);
 
     return res.status(200).json({
@@ -149,93 +177,110 @@ const Login = async (req, res) => {
   } catch (error) {
     console.error("Error during user login:", error);
     return res.status(500).json({ message: "Internal server error" });
-  }finally { 
-    if (connection) connection.release();
-}
+  }
 };
 
 // Profile function
 const Profile = async (req, res) => {
   try {
-    const id  = req.user.userId;
+    const id = req.user.userId; // Extract user ID from the request (e.g., from middleware)
 
-    // Query to select the user excluding the password and tokens
-    const [rows] = await mySqlPool.query(
-      "SELECT FullName, Email, Phone, Account_Type, Address, documentType, documentNumber, AccountID, ReferralID FROM users WHERE id = ?",
-      [id]
-    );
-
-    console.log("Encrypted user details:", rows[0]);
+    // Query the user while excluding sensitive fields
+    const user = await User.findOne({
+      where: { id },
+      attributes: [
+        "FullName",
+        "Email",
+        "Phone",
+        "Account_Type",
+        "Address",
+        "documentType",
+        "documentNumber",
+        "AccountID",
+        "ReferralID",
+      ],
+    });
 
     // Check if a user was found
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'User not found' });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
+    console.log("Encrypted user details:", user.toJSON());
+
     // Decrypt user data
-    const decryptedUserData = decryptUserData(rows[0]);
-    decryptedUserData.AccountID = rows[0].AccountID;
-    decryptedUserData.ReferralID = rows[0].ReferralID;
+    const decryptedUserData = decryptUserData(user.toJSON());
+    decryptedUserData.AccountID = user.AccountID; // Ensure IDs remain unchanged
+    decryptedUserData.ReferralID = user.ReferralID;
+
     console.log("Decrypted user details:", decryptedUserData);
 
-    // Return the user data
-    res.json(decryptedUserData);
+    // Return the decrypted user data
+    return res.json(decryptedUserData);
   } catch (error) {
-    console.error('Error fetching user profile:', error);
-    res.status(500).json({ message: 'Server error', error });
+    console.error("Error fetching user profile:", error);
+    return res.status(500).json({ message: "Server error", error });
   }
 };
 
    // Update Profile function
    const UpdateProfile = async (req, res) => {
-     try {
-       const id  = req.user.userId; 
-       const updates = encryptUserData(req.body); 
-
-       // Build the query
-       const query = `
-         UPDATE users 
-         SET 
-           FullName = COALESCE(?, FullName), 
-           Phone = COALESCE(?, Phone), 
-           Account_Type = COALESCE(?, Account_Type), 
-           Address = COALESCE(?, Address), 
-           documentType = COALESCE(?, documentType), 
-           documentNumber = COALESCE(?, documentNumber) 
-         WHERE id = ?`;
-
-       // Execute the query 
-       const [result] = await mySqlPool.query(query, [
-         updates.FullName,
-         updates.Phone,
-         updates.Account_Type,
-         updates.Address,
-         updates.documentType,
-         updates.documentNumber,
-         id
-       ]);
-
-       // Check if any rows were affected
-       if (result.affectedRows === 0) {
-         return res.status(404).json({ message: 'User not found' });
-       }
-
-       // Fetch the updated user to send back in the response
-       const [updatedUser] = await mySqlPool.query("SELECT * FROM users WHERE id = ?", [id]);
-
-       // Decrypt updated user data before sending the response
-       const decryptedUpdatedUserData = decryptUserData(updatedUser[0]);
-
-       res.json({ message: 'Profile updated successfully', user: decryptedUpdatedUserData });
-     } catch (error) {
-       console.error('Error updating user profile:', error);
-       res.status(500).json({ message: 'Server error', error });
-     }
-   };
-
-   const KYCUpdate = async (req, res) => {
     try {
-      const id = req.user.userId; // User ID from the request parameters
+      const id = req.user.userId; // Ensure this comes from JWT middleware
+      const updates = encryptUserData(req.body); // Encrypt incoming data
+  
+      console.log('Updating user with ID:', id);
+      console.log('Updates:', updates);
+  
+      // Update the user's profile with the provided data
+      const [affectedRows] = await User.update(
+        {
+          FullName: updates.FullName,
+          Phone: updates.Phone,
+          Account_Type: updates.Account_Type,
+          Address: updates.Address,
+          documentType: updates.documentType,
+          documentNumber: updates.documentNumber,
+        },
+        {
+          where: { id },
+          individualHooks: true, // Ensure hooks run if any (e.g., data validation or transformations)
+        }
+      );
+  
+      if (affectedRows === 0) {
+        return res.status(404).json({ message: "User not found" });
+      }
+  
+      // Fetch the updated user
+      const updatedUser = await User.findOne({
+        where: { id },
+        attributes: [
+          "FullName",
+          "Email",
+          "Phone",
+          "Account_Type",
+          "Address",
+          "documentType",
+          "documentNumber",
+          "AccountID",
+          "ReferralID",
+        ],
+      });
+  
+      const decryptedUpdatedUserData = decryptUserData(updatedUser.toJSON());
+  
+      return res.json({ message: "Profile updated successfully", user: decryptedUpdatedUserData });
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      return res.status(500).json({ message: "Server error", error });
+    }
+  };
+  
+
+  const KYCUpdate = async (req, res) => {
+    try {
+      const id = req.user.userId; // Extract user ID from the authenticated request
       const { documentType, documentNumber } = req.body;
   
       // Validate input
@@ -248,8 +293,8 @@ const Profile = async (req, res) => {
       const encryptedDocumentNumber = encrypt(documentNumber);
   
       // Check if the user exists
-      const [userResult] = await mySqlPool.query("SELECT id FROM users WHERE id = ?", [id]);
-      if (userResult.length === 0) {
+      const user = await User.findOne({ where: { id } });
+      if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
   
@@ -257,39 +302,29 @@ const Profile = async (req, res) => {
       const submissionDate = new Date(); // Current date for submission
       const KYCStatus = "pending"; // Set status to pending
   
-      const updateQuery = `
-        UPDATE users 
-        SET 
-          documentType = ?, 
-          documentNumber = ?, 
-          submissionDate = ?, 
-          KYC_Status = ? 
-        WHERE id = ?`;
-  
-      // Execute the update query
-      await mySqlPool.query(updateQuery, [
-        encryptedDocumentType,
-        encryptedDocumentNumber,
+      await user.update({
+        documentType: encryptedDocumentType,
+        documentNumber: encryptedDocumentNumber,
         submissionDate,
-        KYCStatus,
-        id,
-      ]);
+        KYC_Status: KYCStatus,
+      });
   
       // Respond with success
       return res.status(200).json({
         message: "KYC submitted successfully",
-        KYCStatus: "pending",
+        KYCStatus,
         submissionDate,
       });
     } catch (error) {
       console.error("Error during KYC update:", error);
-      res.status(500).json({ message: "Internal server error", error });
+      return res.status(500).json({ message: "Internal server error", error });
     }
   };
   
+  
   const ChangePassword = async (req, res) => {
     try {
-      const id = req.user.userId; // User ID from request parameters
+      const id = req.user.userId; // Extract user ID from the authenticated request
       const { oldPassword, newPassword } = req.body;
   
       // Validate input
@@ -298,15 +333,13 @@ const Profile = async (req, res) => {
       }
   
       // Fetch the user by ID
-      const [userResult] = await mySqlPool.query("SELECT Password FROM users WHERE id = ?", [id]);
-      if (userResult.length === 0) {
+      const user = await User.findOne({ where: { id } });
+      if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
   
-      const hashedOldPassword = userResult[0].Password;
-  
       // Validate the old password
-      const isOldPasswordValid = await bcrypt.compare(oldPassword, hashedOldPassword);
+      const isOldPasswordValid = await bcrypt.compare(oldPassword, user.Password);
       if (!isOldPasswordValid) {
         return res.status(400).json({ message: "Old password is incorrect" });
       }
@@ -315,106 +348,140 @@ const Profile = async (req, res) => {
       const hashedNewPassword = await bcrypt.hash(newPassword, 10);
   
       // Update the password in the database
-      await mySqlPool.query("UPDATE users SET Password = ? WHERE id = ?", [hashedNewPassword, id]);
+      await user.update({ Password: hashedNewPassword });
   
       // Respond with success
       return res.status(200).json({ message: "Password changed successfully" });
     } catch (error) {
       console.error("Error during password change:", error);
-      res.status(500).json({ message: "Internal server error", error });
+      return res.status(500).json({ message: "Internal server error", error });
     }
   };
   
+  
   const ForgetPassword = async (req, res) => {
     try {
-        const { Email } = req.body;
-
-
-        const [user] = await mySqlPool.query("SELECT * FROM users WHERE Email = ?",[Email])
-        const FindUser = user[0];
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        // const userId = req.user.userId;
-        console.log("userId:",FindUser.id)
-
-        const resetToken = jwt.sign({ id: FindUser.id }, process.env.JWT_SECRET_KEY, { expiresIn: '10m' });
-       
-        const resetLink = `http://localhost:3000/resetPassword/${resetToken}`;
-
-        // it's Nodemailer setup..
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
-        });
-
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: Email,
-            subject: 'Password Reset Request',
-            text: `Click the link to reset your password: ${resetLink}`,
-        };
-
-        // we Send email using this predefined method called sendMail 
-        await transporter.sendMail(mailOptions); 
-
-        res.status(200).json({ message: "Password reset link sent to email." });
+      const { Email } = req.body;
+  
+      // Validate input
+      if (!Email) {
+        return res.status(400).json({ message: "Email is required." });
+      }
+  
+      // Find the user by email using Sequelize
+      const user = await User.findOne({ where: { Email } });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+  
+      console.log("User ID:", user.id);
+  
+      // Generate a JWT reset token
+      const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY, {
+        expiresIn: "10m",
+      });
+  
+      const resetLink = `http://localhost:3000/resetPassword/${resetToken}`;
+  
+      // Configure Nodemailer transporter
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+  
+      // Mail options
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: Email,
+        subject: "Password Reset Request",
+        text: `Click the link to reset your password: ${resetLink}`,
+      };
+  
+      // Send the email
+      await transporter.sendMail(mailOptions);
+  
+      // Respond with success message
+      return res
+        .status(200)
+        .json({ message: "Password reset link sent to email." });
     } catch (error) {
-        console.error("Forgot Password Error:", error);
+      console.error("Forgot Password Error:", error);
+      return res.status(500).json({ message: "Internal server error.", error });
     }
-};
+  };
 
-const ResetPassword = async (req, res, next) => {
-  try {
+  const ResetPassword = async (req, res, next) => {
+    try {
       const { token } = req.params;
       const { newPassword } = req.body;
+  
+      // Validate input
       if (!newPassword) {
-          return res.status(400).json({ message: "New password is required." });
+        return res.status(400).json({ message: "New password is required." });
       }
-      // Verify the token and get the user's ID
+  
+      // Verify the token and extract the user's ID
       const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
       console.log("Decoded Token:", decoded);
-
-      // Check if the user exists
-      const [user] = await mySqlPool.query("SELECT * FROM users WHERE id = ?", [decoded.id]);
-      if (!user.length) {
-          return res.status(404).json({ message: "User not found" });
+  
+      // Find the user by ID
+      const user = await User.findByPk(decoded.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
       }
-      // Update the password in the database
-      const hashedPassword = encrypt(newPassword); // Replace this with your hashing logic
-      await mySqlPool.query("UPDATE users SET password = ? WHERE id = ?", [hashedPassword, decoded.id]);
-
+  
+      // Hash the new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+  
+      // Update the user's password
+      await user.update({ Password: hashedPassword });
+  
       res.status(200).json({ message: "Password has been reset successfully." });
-  } catch (error) {
+    } catch (error) {
       console.error("Reset Password Error:", error);
-      if (error.name === 'TokenExpiredError') {
-          return res.status(400).json({ message: "Reset token expired." });
-      } else if (error.name === 'JsonWebTokenError') {
-          return res.status(400).json({ message: "Invalid token." });
-      } else {
-          next(error);
+  
+      // Handle JWT errors
+      if (error.name === "TokenExpiredError") {
+        return res.status(400).json({ message: "Reset token expired." });
+      } else if (error.name === "JsonWebTokenError") {
+        return res.status(400).json({ message: "Invalid token." });
       }
-  }
-};
+  
+      // Pass other errors to the global error handler
+      next(error);
+    }
+  };
+  
 
 // Logout Function
 const Logout = async (req, res) => {
   try {
     const { refreshToken } = req.cookies;
 
+    // Check if the refresh token is provided
     if (!refreshToken) {
       return res.status(400).json({ message: "No token provided" });
     }
 
+    // Verify the refresh token
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
     if (!decoded) {
       return res.status(401).json({ message: "Invalid token" });
     }
 
-    await mySqlPool.query("UPDATE users SET refreshToken = NULL WHERE id = ?", [decoded.userId]);
+    // Find the user using the decoded user ID from the refresh token
+    const Finduser = await User.findOne({ where: { id: decoded.userId } });
+    if (!Finduser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update the user's refresh token to NULL
+    await Finduser.update({ refreshToken: null });
+
+    // Clear cookies
     res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
 
