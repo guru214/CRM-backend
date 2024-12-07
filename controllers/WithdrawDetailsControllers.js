@@ -1,7 +1,24 @@
-import mySqlPool from "../config/db.js";
+import mongoose from "mongoose";
 import dotenv from "dotenv";
 import { encrypt, decrypt } from "../lib/encryptDecrypt.js";
 dotenv.config(); // Load environment variables
+
+// Withdraw Mode Schema
+const WithdrawModeSchema = new mongoose.Schema({
+  AccountID: { type: String, required: true, ref: 'User' },
+  account_holder_name: { type: String },
+  account_number: { type: String },
+  ifsc_code: { type: String },
+  bic_swift_code: { type: String },
+  branch: { type: String },
+  bank_account_currency: { type: String },
+  upi_address: { type: String },
+  btc_withdraw_address: { type: String },
+  eth_withdraw_address: { type: String },
+  netteller_address: { type: String },
+});
+
+const WithdrawMode = mongoose.model("WithdrawMode", WithdrawModeSchema);
 
 // Function to encrypt withdraw modes data
 const encryptWithdrawData = (withdrawData) => {
@@ -35,118 +52,70 @@ const decryptWithdrawData = (encryptedData) => {
   };
 };
 
+// Submit Withdraw Details
 const submitWithdrawDetails = async (req, res) => {
   try {
-    const { AccountID, withdrawData } = req.body; // Get AccountID and withdraw data from request body
+    const { AccountID, withdrawData } = req.body;
 
-    // Encrypt withdraw mode data
+    // Encrypt withdraw data
     const encryptedWithdrawData = encryptWithdrawData(withdrawData);
 
-    // Insert encrypted data into the database
-    const [result] = await mySqlPool.query(
-      `INSERT INTO withdraw_modes (AccountID, account_holder_name, account_number, ifsc_code, bic_swift_code, branch, 
-        bank_account_currency, upi_address, btc_withdraw_address, eth_withdraw_address, netteller_address)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        AccountID, // Using AccountID as the identifier
-        encryptedWithdrawData.account_holder_name,
-        encryptedWithdrawData.account_number,
-        encryptedWithdrawData.ifsc_code,
-        encryptedWithdrawData.bic_swift_code,
-        encryptedWithdrawData.branch,
-        encryptedWithdrawData.bank_account_currency,
-        encryptedWithdrawData.upi_address,
-        encryptedWithdrawData.btc_withdraw_address,
-        encryptedWithdrawData.eth_withdraw_address,
-        encryptedWithdrawData.netteller_address,
-      ]
-    );
+    // Create and save new withdraw mode record
+    const newWithdrawMode = new WithdrawMode({
+      AccountID,
+      ...encryptedWithdrawData,
+    });
 
-    if (result.affectedRows > 0) {
-      return res.status(201).json({ message: "Withdraw details submitted successfully" });
-    } else {
-      return res.status(500).json({ message: "Failed to submit withdraw details" });
-    }
+    await newWithdrawMode.save();
+
+    return res.status(201).json({ message: "Withdraw details submitted successfully" });
   } catch (error) {
     console.error("Error during withdraw submission:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-
+// Update Withdraw Details
 const updateWithdrawDetails = async (req, res) => {
   try {
-    const { AccountID, withdrawData } = req.body; // Get AccountID and updated withdraw data from request body
+    const { AccountID, withdrawData } = req.body;
 
     // Encrypt the updated withdraw data
     const encryptedWithdrawData = encryptWithdrawData(withdrawData);
 
-    // Update the withdraw details in the database using AccountID
-    const [result] = await mySqlPool.query(
-      `UPDATE withdraw_modes 
-       SET account_holder_name = ?, account_number = ?, ifsc_code = ?, bic_swift_code = ?, branch = ?, 
-           bank_account_currency = ?, upi_address = ?, btc_withdraw_address = ?, eth_withdraw_address = ?, 
-           netteller_address = ?
-       WHERE AccountID = ?`,
-      [
-        encryptedWithdrawData.account_holder_name,
-        encryptedWithdrawData.account_number,
-        encryptedWithdrawData.ifsc_code,
-        encryptedWithdrawData.bic_swift_code,
-        encryptedWithdrawData.branch,
-        encryptedWithdrawData.bank_account_currency,
-        encryptedWithdrawData.upi_address,
-        encryptedWithdrawData.btc_withdraw_address,
-        encryptedWithdrawData.eth_withdraw_address,
-        encryptedWithdrawData.netteller_address,
-        AccountID, 
-      ]
+    // Find and update the withdraw details
+    const updatedWithdrawMode = await WithdrawMode.findOneAndUpdate(
+      { AccountID },
+      { ...encryptedWithdrawData },
+      { new: true } // Return the updated document
     );
 
-    if (result.affectedRows > 0) {
-      return res.status(200).json({ message: "Withdraw details updated successfully" });
-    } else {
+    if (!updatedWithdrawMode) {
       return res.status(404).json({ message: "Withdraw details not found for this AccountID" });
     }
+
+    return res.status(200).json({ message: "Withdraw details updated successfully" });
   } catch (error) {
     console.error("Error during withdraw update:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
 
+// Get Withdraw Details
 const getWithdrawDetails = async (req, res) => {
   try {
-    const { AccountID } = req.params; // Get AccountID from request params
+    const { AccountID } = req.params;
 
-    // Query the database for the withdraw details of the given AccountID
-    const [result] = await mySqlPool.query(
-      `SELECT * FROM withdraw_modes WHERE AccountID = ?`,
-      [AccountID] // Use AccountID as a key to fetch withdraw details
-    );
+    // Find withdraw details by AccountID
+    const withdrawData = await WithdrawMode.findOne({ AccountID });
 
-    // If no withdraw details are found
-    if (result.length === 0) {
+    if (!withdrawData) {
       return res.status(404).json({ message: "No withdraw details found for this AccountID" });
     }
 
     // Decrypt the withdraw details
-    const withdrawData = result[0]; // Assuming we're retrieving a single record
-    
-    const decryptedWithdrawData = decryptWithdrawData({
-      account_holder_name: withdrawData.account_holder_name,
-      account_number: withdrawData.account_number,
-      ifsc_code: withdrawData.ifsc_code,
-      bic_swift_code: withdrawData.bic_swift_code,
-      branch: withdrawData.branch,
-      bank_account_currency: withdrawData.bank_account_currency,
-      upi_address: withdrawData.upi_address,
-      btc_withdraw_address: withdrawData.btc_withdraw_address,
-      eth_withdraw_address: withdrawData.eth_withdraw_address,
-      netteller_address: withdrawData.netteller_address,
-      // amount: withdrawData.amount, // Amount is not encrypted
-    });
+    const decryptedWithdrawData = decryptWithdrawData(withdrawData.toObject());
 
-    // Return the decrypted withdraw data to the client
     return res.status(200).json({
       message: "Withdraw details fetched successfully",
       data: decryptedWithdrawData,
@@ -157,5 +126,5 @@ const getWithdrawDetails = async (req, res) => {
   }
 };
 
-
-export { submitWithdrawDetails, updateWithdrawDetails, getWithdrawDetails };
+export { WithdrawMode, submitWithdrawDetails, updateWithdrawDetails, getWithdrawDetails };
+ 
