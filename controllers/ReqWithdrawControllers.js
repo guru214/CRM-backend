@@ -1,4 +1,4 @@
-import mySqlPool from "../config/db.js";
+import mySqlPool from "../config/dbOld.js";
 import dotenv from "dotenv";
 
 dotenv.config(); // Load environment variables

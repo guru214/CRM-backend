@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import mySqlPool from "../config/db.js";
+import mySqlPool from "../config/dbOld.js";
 import dotenv from "dotenv";
 import bcrypt from 'bcrypt';
 import { encrypt, decrypt} from "../lib/encryptDecrypt.js";
