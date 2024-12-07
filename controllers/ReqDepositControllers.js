@@ -1,5 +1,5 @@
 // import { encrypt, decrypt } from '../middleware/encryptDecrypt.js'; 
-import mySqlPool from "../config/dbOld.js";
+import mySqlPool from "../config/db.js";
 
 // Function to handle image upload and encryption
 // const encryptImageProof = (image) => {
