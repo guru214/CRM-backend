@@ -7,7 +7,7 @@ This project is a backend server built with Node.js, Express.js, and MySQL. It p
 - Deposit Request Handling
 - Withdrawal Request Handling
 - Encrypted Storage of Sensitive Information
-- Transaction Management for Financial Operations
+- Transaction Management for Financial Operationss
 
 ## Technologies Used
 - Node.js
