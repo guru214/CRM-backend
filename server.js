@@ -1,8 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
-<<<<<<< HEAD
-import mySqlPool from './config/db.js';
+import mongoose from 'mongoose';
 import AuthRoutes from './routes/UserRoutes.js';
 import WithdrawDetails from './routes/WithdrawDetailsRoutes.js';
 import ReqWithdraw from './routes/ReqWithdrawRoutes.js';
@@ -10,15 +9,6 @@ import ReqDeposit from './routes/ReqDepositRoutes.js';
 import cookieParser from 'cookie-parser';
 import Refresh from './routes/refreshTokenRoute.js';
 // import logger from './loggers.js/log.js';
-=======
-import mongoose from 'mongoose';
-import AuthRoutes from './routes/User.js';
-import WithdrawDetails from './routes/WithdrawDetails.js';
-import ReqWithdraw from './routes/ReqWithdraw.js';
-import ReqDeposit from './routes/ReqDeposit.js';
-import cookieParser from 'cookie-parser';
-import Refresh from './routes/refreshToken.js';
->>>>>>> 99aeb429b2d23b2216e6b2b57dbdebbc0cd7a77b
 
 const app = express();
 
@@ -45,17 +35,6 @@ const connectDB = async () => {
       useUnifiedTopology: true,
     });
     console.log('MongoDB connected successfully');
-    
-    // Error handling middleware
-    app.use((err, req, res, next) => {
-      console.error(err.stack);
-      res.status(500).send({ message: "Something went wrong!" });
-    });
-
-    // Listen to the server after DB connection
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-    });
   } catch (err) {
     console.error('MongoDB connection error:', err.message);
     process.exit(1); // Exit process if connection fails
@@ -64,3 +43,15 @@ const connectDB = async () => {
 
 // Call the connectDB function to establish the database connection
 connectDB();
+
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send({ message: "Something went wrong!" });
+});
+
+// Listen to the server after DB connection
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
