@@ -97,6 +97,11 @@ CREATE TABLE IF NOT EXISTS deposit_requests (
 --   PRIMARY KEY (transaction_id),
 --   FOREIGN KEY (account_id) REFERENCES crm.account_table(account_id) ON DELETE CASCADE
 -- );
+
+
+
+
+
 -- CREATE DATABASE bank_transfer;
 --show databases;
 --use bank_transfer;
