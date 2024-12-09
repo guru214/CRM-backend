@@ -1,61 +1,75 @@
-// import { encrypt, decrypt } from '../middleware/encryptDecrypt.js'; 
-import mySqlPool from "../config/db.js";
+import mongoose from "mongoose";
+ 
+// Define the schema for deposit requests
+const depositRequestSchema = new mongoose.Schema({
+  AccountID: { type: String, required: true },
+  Deposit_mode: { type: String, required: true },
+  amount: { type: Number, required: true },
+  image_proof: { type: String, required: true },
+  status: { type: String, default: "Pending" },
+});
 
-// Function to handle image upload and encryption
-// const encryptImageProof = (image) => {
-//   // Convert image buffer to a base64 string before encrypting
-//   const imageBase64 = image.toString('base64');
-//   return encrypt(imageBase64);
-// };
+// Define the schema for users
+const userSchema = new mongoose.Schema({
+  AccountID: { type: String, unique: true, required: true },
+  amount: { type: Number, default: 0 },
+});
+
+const DepositRequest = mongoose.model("DepositRequest", depositRequestSchema);
+const User = mongoose.model("User", userSchema);
 
 // Submit a new deposit request
 const submitDepositRequest = async (req, res) => {
   try {
     const { AccountID, deposit_mode, amount, image_proof } = req.body;
-    // const { image } = req.files; // Assuming you're using a file upload middleware like multer
 
     if (!AccountID || !deposit_mode || !amount || !image_proof) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // encrypt sensitive information
-    // const encryptedDepositMode = encrypt(deposit_mode);
-    // const encryptedImageProof = encryptImageProof(image.data); // encrypt the image
-
-    // Start a transaction
-    const connection = await mySqlPool.getConnection();
+    // Start a session for transaction
+    const session = await mongoose.startSession();
 
     try {
-      await connection.beginTransaction();
+      session.startTransaction();
 
-      // Insert the deposit request into the database
-      const [result] = await connection.query(
-        `INSERT INTO deposit_requests (AccountID, Deposit_mode, amount, image_proof) VALUES (?, ?, ?, ?)`,
-        [AccountID, deposit_mode, amount, image_proof]
-      );
+      // Create a new deposit request
+      const newDepositRequest = new DepositRequest({
+        AccountID,
+        Deposit_mode: deposit_mode,
+        amount,
+        image_proof,
+      });
+
+      await newDepositRequest.save({ session });
 
       // Update the user's balance
-      const [updateResult] = await connection.query(
-        `UPDATE users SET amount = amount + ? WHERE AccountID = ?`,
-        [amount, AccountID]
+      const updateResult = await User.updateOne(
+        { AccountID },
+        { $inc: { amount } },
+        { session }
       );
 
-      if (result.affectedRows > 0 && updateResult.affectedRows > 0) {
+      if (updateResult.modifiedCount > 0) {
         // Commit the transaction
-        await connection.commit();
-        return res.status(201).json({ message: "Deposit request submitted successfully and balance updated." });
+        await session.commitTransaction();
+        return res.status(201).json({
+          message: "Deposit request submitted successfully and balance updated.",
+        });
       } else {
         // Rollback the transaction
-        await connection.rollback();
-        return res.status(500).json({ message: "Failed to submit deposit request or update balance." });
+        await session.abortTransaction();
+        return res.status(500).json({
+          message: "Failed to update balance.",
+        });
       }
     } catch (error) {
       // Rollback the transaction in case of error
-      await connection.rollback();
+      await session.abortTransaction();
       console.error("Error submitting deposit request:", error);
       return res.status(500).json({ message: "Internal server error" });
     } finally {
-      connection.release();
+      session.endSession();
     }
   } catch (error) {
     console.error("Error submitting deposit request:", error);
@@ -72,21 +86,11 @@ const listDepositRequests = async (req, res) => {
       return res.status(400).json({ message: "AccountID is required" });
     }
 
-    const [rows] = await mySqlPool.query(
-      "SELECT id, Deposit_mode, amount, status, image_proof FROM deposit_requests WHERE AccountID = ?",
-      [AccountID]
-    );
+    const requests = await DepositRequest.find({ AccountID });
 
-    if (rows.length === 0) {
+    if (requests.length === 0) {
       return res.status(404).json({ message: "No deposit requests found" });
     }
-
-    // decrypt image proofs
-    // const requests = rows.map(row => ({
-    //   ...row,
-    //   image_proof: decrypt(row.image_proof) // decrypt the image proof before sending to client
-    // }));
-    const requests = [rows];
 
     res.json(requests);
   } catch (error) {

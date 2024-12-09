@@ -15,7 +15,7 @@ import sequelize from './config/db.js';  // Import the Sequelize instance
 const app = express();
 
 dotenv.config();
-const PORT = process.env.PORT || 4040;
+const PORT =  4040;
 
 // Middlewares
 app.use(cookieParser());
