@@ -31,7 +31,7 @@ app.use(cors({
 // Routes
 app.use('/api/v1/auth', AuthRoutes);
 app.use('/api/v1', Refresh);
-app.use('/api/v1/withdraw', WithdrawDetails);
+app.use('/api/v1/withdrawDetails', WithdrawDetails);
 app.use('/api/v1/withdraw', ReqWithdraw);
 app.use('/api/v1/deposit', ReqDeposit);
 

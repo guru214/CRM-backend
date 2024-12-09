@@ -14,9 +14,10 @@ import crypto from 'crypto';
 dotenv.config(); // Load environment variables
 
 // Function to generate tokens
-const generateTokens = (userId) => {
-  const accessToken = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "50m" });
-  const refreshToken = jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
+const generateTokens = (userId, AccountID) => {
+  const accessToken = jwt.sign({ userId, AccountID }, process.env.JWT_SECRET, { expiresIn: "50m" });
+  const refreshToken = jwt.sign({ userId, AccountID }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
+
   return { accessToken, refreshToken };
 };
 
@@ -143,7 +144,7 @@ const Login = async (req, res) => {
     }
 
     // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(Finduser.id);
+    const { accessToken, refreshToken } = generateTokens(Finduser.id, Finduser.AccountID);
 
     // Update the refresh token in the database
     await User.update(

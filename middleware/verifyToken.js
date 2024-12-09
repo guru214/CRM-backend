@@ -16,6 +16,7 @@ const verifyToken = (req, res, next) => {
       }
 
       req.user = decoded; // Contains `userId` or other payload data
+      console.log(req.user)
       next();
     });
   } catch (error) {

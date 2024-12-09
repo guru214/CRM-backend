@@ -11,6 +11,6 @@ router.post("/",verifyToken, submitWithdrawDetails);
 router.put("/",verifyToken, updateWithdrawDetails);
 
 // Route to get Withdraw details by AccountID
-router.get("/details/:AccountID",verifyToken, getWithdrawDetails);
+router.get("/",verifyToken, getWithdrawDetails);
 
 export default router;
