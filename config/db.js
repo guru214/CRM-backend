@@ -7,10 +7,10 @@ const mySqlPool = mysql.createPool({
   // password: 'SHA#1113#sha',  //sohail
   password:'Sainaidu#2000', //Sailakshmi
   // database: 'server_crm', //anwaar
-  database: 'user_db',
-  // port: 3300
-  port:3306
-  // port: 5000 //sohail
+  database: 'bank_transfer',//sailakshmi
+  // port: 3300 ,//anwar
+  port:3306 ,//sailakshmi
+  // port: 5000 ,//sohail
 });
 
 export default mySqlPool;
