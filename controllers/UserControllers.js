@@ -430,7 +430,7 @@ const ForgetPassword = async (req, res) => {
 const ResetPassword = async (req, res, next) => {
   try {
     const { token } = req.params;
-    const id = req.user.userId; // Extract user ID from the authenticated request
+    // const id = req.user.userId; // Extract user ID from the authenticated request
     console.log(id)
     const { newPassword } = req.body;
 
@@ -444,7 +444,7 @@ const ResetPassword = async (req, res, next) => {
     console.log("Decoded Token:", decoded);
 
     // Find the user by ID
-    const user = await User.findOne({ where: { id } });
+    const user = await User.findOne({ where: { id: decoded.userId } });
     console.log("users",user)
     if (!user) {
       return res.status(404).json({ message: "User not found" });
