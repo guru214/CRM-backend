@@ -35,7 +35,7 @@ router.put("/changepassword",verifyToken, ChangePassword);
 router.post('/forgetpassword',  ForgetPassword);
 
 //reset password
-router.post('/resetpassword/:token',ResetPassword);
+router.post('/resetpassword/:token', verifyToken, ResetPassword);
 
 // Update KYC details
 router.put("/kyc",verifyToken, KYCUpdate);
