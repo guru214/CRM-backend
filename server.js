@@ -35,16 +35,19 @@ app.use('/api/v1/withdraw', WithdrawDetails);
 app.use('/api/v1/withdraw', ReqWithdraw);
 app.use('/api/v1/deposit', ReqDeposit);
 
-// Condition to connect to the database and then start the server
+
+// Connect to the database and start the server
 sequelize
   .authenticate()
   .then(() => {
     console.log('Database connected successfully with Sequelize');
+
+    // Sync all models with the database
+    return sequelize.sync();
   })
   .catch((err) => {
     console.error('Unable to connect to the database:', err);
   });
-  sequelize.sync();
 
 // MongoDB connection
 const connectDB = async () => {

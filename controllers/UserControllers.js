@@ -3,10 +3,10 @@ import jwt from "jsonwebtoken";
 import mySqlPool from '../config/db.js';
 import dotenv from "dotenv";
 import bcrypt from 'bcrypt';
-import { encrypt, decrypt} from "../lib/encryptDecrypt.js";
+import { encrypt, decrypt } from "../lib/encryptDecrypt.js";
 import { generateAccountID, generateReferralID } from "../lib/uidGeneration.js";
 import { RESPONSE_MESSAGES } from "../lib/constants.js";
-import { encryptPassword, decryptPassword, generateRandomString} from "../lib/encryptDecryptPassword.js" 
+import { encryptPassword, decryptPassword, generateRandomString } from "../lib/encryptDecryptPassword.js"
 import nodemailer from 'nodemailer';
 import User from "../models/User.js";
 import crypto from 'crypto';
@@ -61,12 +61,12 @@ const Register = async (req, res) => {
     const randomStringOne = generateRandomString(5);
     const randomStringTwo = generateRandomString(10);
 
-    const iv = crypto.randomBytes(12).toString('hex');  
+    const iv = crypto.randomBytes(12).toString('hex');
     console.log(iv);
     const securedIv = randomStringOne + iv + randomStringTwo;
     console.log(securedIv);
-    const encryptedPassword = encryptPassword(Password,iv)
-    console.log("encrypted password",encryptedPassword);
+    const encryptedPassword = encryptPassword(Password, iv)
+    console.log("encrypted password", encryptedPassword);
 
     // Generate unique AccountID and ReferralID
     const AccountID = await generateAccountID();
@@ -94,25 +94,25 @@ const Register = async (req, res) => {
     });
 
 
-//     if (result.affectedRows > 0) {
-//       res.status(201).json({ message: "User registered successfully", AccountID, ReferralID });
-//     } else {
-//       res.status(500).json({ message: "Failed to register user" });
-//     }
-//   } catch (error) {
-//     console.error("Error during user registration:", error);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };
-if (newUser) {
-  res.status(201).json({ message: "User registered successfully", AccountID, ReferralID });
-} else {
-  res.status(500).json({ message: "Failed to register user" });
-}
-} catch (error) {
-console.error("Error during user registration:", error);
-res.status(500).json({ message: "Internal server error" });
-}
+    //     if (result.affectedRows > 0) {
+    //       res.status(201).json({ message: "User registered successfully", AccountID, ReferralID });
+    //     } else {
+    //       res.status(500).json({ message: "Failed to register user" });
+    //     }
+    //   } catch (error) {
+    //     console.error("Error during user registration:", error);
+    //     res.status(500).json({ message: "Internal server error" });
+    //   }
+    // };
+    if (newUser) {
+      res.status(201).json({ message: "User registered successfully", AccountID, ReferralID });
+    } else {
+      res.status(500).json({ message: "Failed to register user" });
+    }
+  } catch (error) {
+    console.error("Error during user registration:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
 
@@ -137,7 +137,7 @@ const Login = async (req, res) => {
     const encryptedPass = encryptPassword(Password, realIv);
     const storedPassword = Finduser.Password;
 
-    if ( encryptedPass !== storedPassword){
+    if (encryptedPass !== storedPassword) {
       return res.status(401).json({ message: RESPONSE_MESSAGES.INVALID.message });
 
     }
@@ -223,238 +223,261 @@ const Profile = async (req, res) => {
   }
 };
 
-   // Update Profile function
-   const UpdateProfile = async (req, res) => {
-    try {
-      const id = req.user.userId; // Ensure this comes from JWT middleware
-      const updates = encryptUserData(req.body); // Encrypt incoming data
-  
-      console.log('Updating user with ID:', id);
-      console.log('Updates:', updates);
-  
-      // Update the user's profile with the provided data
-      const [affectedRows] = await User.update(
-        {
-          FullName: updates.FullName,
-          Phone: updates.Phone,
-          Account_Type: updates.Account_Type,
-          Address: updates.Address,
-          documentType: updates.documentType,
-          documentNumber: updates.documentNumber,
-        },
-        {
-          where: { id },
-          individualHooks: true, // Ensure hooks run if any (e.g., data validation or transformations)
-        }
-      );
-  
-      if (affectedRows === 0) {
-        return res.status(404).json({ message: "User not found" });
-      }
-  
-      // Fetch the updated user
-      const updatedUser = await User.findOne({
+// Update Profile function
+const UpdateProfile = async (req, res) => {
+  try {
+    const id = req.user.userId; // Ensure this comes from JWT middleware
+    const updates = encryptUserData(req.body); // Encrypt incoming data
+
+    console.log('Updating user with ID:', id);
+    console.log('Updates:', updates);
+
+    // Update the user's profile with the provided data
+    const [affectedRows] = await User.update(
+      {
+        FullName: updates.FullName,
+        Phone: updates.Phone,
+        Account_Type: updates.Account_Type,
+        Address: updates.Address,
+        documentType: updates.documentType,
+        documentNumber: updates.documentNumber,
+      },
+      {
         where: { id },
-        attributes: [
-          "FullName",
-          "Email",
-          "Phone",
-          "Account_Type",
-          "Address",
-          "documentType",
-          "documentNumber",
-          "AccountID",
-          "ReferralID",
-        ],
-      });
-  
-      const decryptedUpdatedUserData = decryptUserData(updatedUser.toJSON());
-  
-      return res.json({ message: "Profile updated successfully", user: decryptedUpdatedUserData });
-    } catch (error) {
-      console.error("Error updating user profile:", error);
-      return res.status(500).json({ message: "Server error", error });
-    }
-  };
-  
+        individualHooks: true, // Ensure hooks run if any (e.g., data validation or transformations)
+      }
+    );
 
-  const KYCUpdate = async (req, res) => {
-    try {
-      const id = req.user.userId; // Extract user ID from the authenticated request
-      const { documentType, documentNumber } = req.body;
-  
-      // Validate input
-      if (!documentType || !documentNumber) {
-        return res.status(400).json({ message: "Document type and number are required" });
-      }
-  
-      // Encrypt the new KYC details
-      const encryptedDocumentType = encrypt(documentType);
-      const encryptedDocumentNumber = encrypt(documentNumber);
-  
-      // Check if the user exists
-      const user = await User.findOne({ where: { id } });
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-  
-      // Update the KYC details
-      const submissionDate = new Date(); // Current date for submission
-      const KYCStatus = "pending"; // Set status to pending
-  
-      await user.update({
-        documentType: encryptedDocumentType,
-        documentNumber: encryptedDocumentNumber,
-        submissionDate,
-        KYC_Status: KYCStatus,
-      });
-  
-      // Respond with success
-      return res.status(200).json({
-        message: "KYC submitted successfully",
-        KYCStatus,
-        submissionDate,
-      });
-    } catch (error) {
-      console.error("Error during KYC update:", error);
-      return res.status(500).json({ message: "Internal server error", error });
+    if (affectedRows === 0) {
+      return res.status(404).json({ message: "User not found" });
     }
-  };
-  
-  
-  const ChangePassword = async (req, res) => {
-    try {
-      const id = req.user.userId; // Extract user ID from the authenticated request
-      const { oldPassword, newPassword } = req.body;
-  
-      // Validate input
-      if (!oldPassword || !newPassword) {
-        return res.status(400).json({ message: "Old password and new password are required" });
-      }
-  
-      // Fetch the user by ID
-      const user = await User.findOne({ where: { id } });
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-  
-      // Validate the old password
-      const isOldPasswordValid = await bcrypt.compare(oldPassword, user.Password);
-      if (!isOldPasswordValid) {
-        return res.status(400).json({ message: "Old password is incorrect" });
-      }
-  
-      // Hash the new password
-      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-  
-      // Update the password in the database
-      await user.update({ Password: hashedNewPassword });
-  
-      // Respond with success
-      return res.status(200).json({ message: "Password changed successfully" });
-    } catch (error) {
-      console.error("Error during password change:", error);
-      return res.status(500).json({ message: "Internal server error", error });
-    }
-  };
-  
-  
-  const ForgetPassword = async (req, res) => {
-    try {
-      const { Email } = req.body;
-  
-      // Validate input
-      if (!Email) {
-        return res.status(400).json({ message: "Email is required." });
-      }
-  
-      // Find the user by email using Sequelize
-      const user = await User.findOne({ where: { Email } });
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-  
-      console.log("User ID:", user.id);
-  
-      // Generate a JWT reset token
-      const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY, {
-        expiresIn: "10m",
-      });
-  
-      const resetLink = `http://localhost:3000/resetPassword/${resetToken}`;
-  
-      // Configure Nodemailer transporter
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
-  
-      // Mail options
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: Email,
-        subject: "Password Reset Request",
-        text: `Click the link to reset your password: ${resetLink}`,
-      };
-  
-      // Send the email
-      await transporter.sendMail(mailOptions);
-  
-      // Respond with success message
-      return res
-        .status(200)
-        .json({ message: "Password reset link sent to email." });
-    } catch (error) {
-      console.error("Forgot Password Error:", error);
-      return res.status(500).json({ message: "Internal server error.", error });
-    }
-  };
 
-  const ResetPassword = async (req, res, next) => {
-    try {
-      const { token } = req.params;
-      const { newPassword } = req.body;
-  
-      // Validate input
-      if (!newPassword) {
-        return res.status(400).json({ message: "New password is required." });
-      }
-  
-      // Verify the token and extract the user's ID
-      const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-      console.log("Decoded Token:", decoded);
-  
-      // Find the user by ID
-      const user = await User.findByPk(decoded.id);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-  
-      // Hash the new password
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-  
-      // Update the user's password
-      await user.update({ Password: hashedPassword });
-  
-      res.status(200).json({ message: "Password has been reset successfully." });
-    } catch (error) {
-      console.error("Reset Password Error:", error);
-  
-      // Handle JWT errors
-      if (error.name === "TokenExpiredError") {
-        return res.status(400).json({ message: "Reset token expired." });
-      } else if (error.name === "JsonWebTokenError") {
-        return res.status(400).json({ message: "Invalid token." });
-      }
-  
-      // Pass other errors to the global error handler
-      next(error);
+    // Fetch the updated user
+    const updatedUser = await User.findOne({
+      where: { id },
+      attributes: [
+        "FullName",
+        "Email",
+        "Phone",
+        "Account_Type",
+        "Address",
+        "documentType",
+        "documentNumber",
+        "AccountID",
+        "ReferralID",
+      ],
+    });
+
+    const decryptedUpdatedUserData = decryptUserData(updatedUser.toJSON());
+
+    return res.json({ message: "Profile updated successfully", user: decryptedUpdatedUserData });
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    return res.status(500).json({ message: "Server error", error });
+  }
+};
+
+
+const KYCUpdate = async (req, res) => {
+  try {
+    const id = req.user.userId; // Extract user ID from the authenticated request
+    const { documentType, documentNumber } = req.body;
+
+    // Validate input
+    if (!documentType || !documentNumber) {
+      return res.status(400).json({ message: "Document type and number are required" });
     }
-  };
-  
+
+    // Encrypt the new KYC details
+    const encryptedDocumentType = encrypt(documentType);
+    const encryptedDocumentNumber = encrypt(documentNumber);
+
+    // Check if the user exists
+    const user = await User.findOne({ where: { id } });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update the KYC details
+    const submissionDate = new Date(); // Current date for submission
+    const KYCStatus = "pending"; // Set status to pending
+
+    await user.update({
+      documentType: encryptedDocumentType,
+      documentNumber: encryptedDocumentNumber,
+      submissionDate,
+      KYC_Status: KYCStatus,
+    });
+
+    // Respond with success
+    return res.status(200).json({
+      message: "KYC submitted successfully",
+      KYCStatus,
+      submissionDate,
+    });
+  } catch (error) {
+    console.error("Error during KYC update:", error);
+    return res.status(500).json({ message: "Internal server error", error });
+  }
+};
+
+
+const ChangePassword = async (req, res) => {
+  try {
+    const id = req.user.userId; // Extract user ID from the authenticated request
+    const { oldPassword, newPassword } = req.body;
+
+    // Validate input
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "Old password and new password are required" });
+    }
+
+    // Fetch the user by ID
+    const Finduser = await User.findOne({ where: { id } });
+    if (!Finduser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // // Validate the old password
+    // const isOldPasswordValid = await bcrypt.compare(oldPassword, user.Password);
+    // if (!isOldPasswordValid) {
+    //   return res.status(400).json({ message: "Old password is incorrect" });
+    // }
+
+    const realIv = Finduser.iv.substring(5, 29); // Extract the IV from stored data
+    const encryptedPass = encryptPassword(oldPassword, realIv);
+    const storedPassword = Finduser.Password;
+
+    if (encryptedPass !== storedPassword) {
+      return res.status(401).json({ message: RESPONSE_MESSAGES.INVALID.message });
+    }
+    console.log('same same');
+
+    const randomStringOne = generateRandomString(5);
+    const randomStringTwo = generateRandomString(10);
+    // Hash the new password
+    const iv = crypto.randomBytes(12).toString('hex');
+    console.log(iv);
+    const securedIv = randomStringOne + iv + randomStringTwo;
+    console.log(securedIv);
+    const hashedNewPassword = encryptPassword(newPassword, iv)
+    // Update the password in the database
+    await Finduser.update({ Password: hashedNewPassword, iv: securedIv });
+
+    // Respond with success
+    return res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    console.error("Error during password change:", error);
+    return res.status(500).json({ message: "Internal server error", error });
+  }
+};
+
+
+const ForgetPassword = async (req, res) => {
+  try {
+    const { Email } = req.body;
+
+    // Validate input
+    if (!Email) {
+      return res.status(400).json({ message: "Email is required." });
+    }
+
+    // Find the user by email using Sequelize
+    const user = await User.findOne({ where: { Email } });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    console.log("User ID:", user.id);
+
+    // Generate a JWT reset token
+    const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY, {
+      expiresIn: "10m",
+    });
+
+    const resetLink = `http://localhost:3000/resetPassword/${resetToken}`;
+
+    // Configure Nodemailer transporter
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    // Mail options
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: Email,
+      subject: "Password Reset Request",
+      text: `Click the link to reset your password: ${resetLink}`,
+    };
+
+    // Send the email
+    await transporter.sendMail(mailOptions);
+
+    // Respond with success message
+    return res
+      .status(200)
+      .json({ message: "Password reset link sent to email." });
+  } catch (error) {
+    console.error("Forgot Password Error:", error);
+    return res.status(500).json({ message: "Internal server error.", error });
+  }
+};
+
+const ResetPassword = async (req, res, next) => {
+  try {
+    const { token } = req.params;
+    const id = req.user.userId; // Extract user ID from the authenticated request
+    console.log(id)
+    const { newPassword } = req.body;
+
+    // Validate input
+    if (!newPassword) {
+      return res.status(400).json({ message: "New password is required." });
+    }
+
+    // Verify the token and extract the user's ID
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    console.log("Decoded Token:", decoded);
+
+    // Find the user by ID
+    const user = await User.findOne({ where: { id } });
+    console.log("users",user)
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Hash the new password
+    const randomStringOne = generateRandomString(5);
+    const randomStringTwo = generateRandomString(10);
+    // Hash the new password
+    const iv = crypto.randomBytes(12).toString('hex');
+    console.log(iv);
+    const securedIv = randomStringOne + iv + randomStringTwo;
+    console.log(securedIv);
+    const hashedNewPassword = encryptPassword(newPassword, iv)
+    // Update the user's password
+    await user.update({ Password: hashedNewPassword, iv: securedIv });
+
+    res.status(200).json({ message: "Password has been reset successfully." });
+  } catch (error) {
+    console.error("Reset Password Error:", error);
+
+    // Handle JWT errors
+    if (error.name === "TokenExpiredError") {
+      return res.status(400).json({ message: "Reset token expired." });
+    } else if (error.name === "JsonWebTokenError") {
+      return res.status(400).json({ message: "Invalid token." });
+    }
+
+    // Pass other errors to the global error handler
+    next(error);
+  }
+};
+
 
 // Logout Function
 const Logout = async (req, res) => {
@@ -492,5 +515,5 @@ const Logout = async (req, res) => {
   }
 };
 
-export { Register, Login, Profile, UpdateProfile, ChangePassword, ForgetPassword,ResetPassword, KYCUpdate, Logout };
+export { Register, Login, Profile, UpdateProfile, ChangePassword, ForgetPassword, ResetPassword, KYCUpdate, Logout };
 

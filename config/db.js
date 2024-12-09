@@ -8,11 +8,14 @@ dotenv.config(); // Load environment variables
 const sequelize = new Sequelize(
   "server_crm", 
   "root", 
-  "SHA#1113#sha", 
+  // "SHA#1113#sha", //Sohail
+  "Npminit@12",  //Anwaar
   {
     host:  'localhost',
     dialect: 'mysql',
-    port:  5000,
+    // port:  5000,  //Sohail
+    port: 3300, //Anwaar
+    
   }
 );
 

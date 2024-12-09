@@ -1,24 +1,7 @@
-import mongoose from "mongoose";
+import WithdrawMode from "../models/WithdrawModeModel.js";
 import dotenv from "dotenv";
 import { encrypt, decrypt } from "../lib/encryptDecrypt.js";
 dotenv.config(); // Load environment variables
-
-// Withdraw Mode Schema
-const WithdrawModeSchema = new mongoose.Schema({
-  AccountID: { type: String, required: true, ref: 'User' },
-  account_holder_name: { type: String },
-  account_number: { type: String },
-  ifsc_code: { type: String },
-  bic_swift_code: { type: String },
-  branch: { type: String },
-  bank_account_currency: { type: String },
-  upi_address: { type: String },
-  btc_withdraw_address: { type: String },
-  eth_withdraw_address: { type: String },
-  netteller_address: { type: String },
-});
-
-const WithdrawMode = mongoose.model("WithdrawMode", WithdrawModeSchema);
 
 // Function to encrypt withdraw modes data
 const encryptWithdrawData = (withdrawData) => {
