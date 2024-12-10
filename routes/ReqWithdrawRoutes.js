@@ -1,24 +1,20 @@
 import express from "express";
 import {
   submitWithdrawRequest,
-  updateWithdrawRequest,
   getWithdrawRequests,
-  deleteWithdrawRequest,
+  cancelWithdrawRequest,
 } from "../controllers/ReqWithdrawControllers.js";
 import verifyToken from "../middleware/verifyToken.js";
 
 const router = express.Router();
 
 // Route to submit a new withdrawal request
-router.post("/submit", verifyToken, submitWithdrawRequest);
-
-// Route to update an existing withdrawal request
-router.put("/update", verifyToken, updateWithdrawRequest);
+router.post("/", verifyToken, submitWithdrawRequest);
 
 // Route to fetch withdrawal requests by AccountID
-router.get("/:AccountID",verifyToken, getWithdrawRequests);
+router.get("/",verifyToken, getWithdrawRequests);
 
 // Route to delete a withdrawal request by ID
-router.delete("/:id",verifyToken, deleteWithdrawRequest);
+router.delete("/:id",verifyToken, cancelWithdrawRequest);
 
 export default router;
