@@ -1,47 +1,15 @@
-import { DataTypes, Model } from "sequelize";
-import sequelize from "../config/db.js";
-import User from "./User.js"; // Import the User model
+import mongoose from "mongoose";
+const Schema = mongoose.Schema;
 
-class DepositRequest extends Model {}
+//depositrequest Mode schema 
+const depositRequestSchema = new Schema({
+  AccountID: { type: String, required: true, ref: 'User'  },
+  Deposit_mode: { type: String, required: true },
+  amount: { type: Number, required: true },
+  image_proof: { type: String, required: true },
+  status: { type: String, default: "Pending" },
+});
 
-DepositRequest.init(
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-      allowNull: false,
-    },
-    AccountID: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    Deposit_mode: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    amount: {
-      type: DataTypes.DECIMAL(15, 2),
-      allowNull: false,
-    },
-    image_proof: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    status: {
-      type: DataTypes.STRING,
-      defaultValue: "Pending",
-    },
-  },
-  {
-    sequelize,
-    modelName: "DepositRequest",
-    tableName: "deposit_requests",
-    timestamps: true,
-  }
-);
-
-// Establish a foreign key relationship
-DepositRequest.belongsTo(User, { foreignKey: 'AccountID', targetKey: 'AccountID' });
+const DepositRequest = mongoose.model("DepositRequest", depositRequestSchema);
 
 export default DepositRequest;

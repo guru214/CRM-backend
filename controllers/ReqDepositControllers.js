@@ -1,22 +1,6 @@
 import mongoose from "mongoose";
- 
-// Define the schema for deposit requests
-const depositRequestSchema = new mongoose.Schema({
-  AccountID: { type: String, required: true },
-  Deposit_mode: { type: String, required: true },
-  amount: { type: Number, required: true },
-  image_proof: { type: String, required: true },
-  status: { type: String, default: "Pending" },
-});
+import DepositRequest from "../models/DepositRequest.js";
 
-// Define the schema for users
-const userSchema = new mongoose.Schema({
-  AccountID: { type: String, unique: true, required: true },
-  amount: { type: Number, default: 0 },
-});
-
-const DepositRequest = mongoose.model("DepositRequest", depositRequestSchema);
-const User = mongoose.model("User", userSchema);
 
 // Submit a new deposit request
 const submitDepositRequest = async (req, res) => {
