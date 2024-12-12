@@ -15,10 +15,10 @@ const RefreshToken = async (req, res) => {
         return res.status(403).json({ message: "Invalid or expired refresh token" });
       }
 
-      const { userId } = decoded;
+      const { userId, AccountID } = decoded;
 
       // Generate a new access token
-      const newAccessToken = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "15m" });
+      const newAccessToken = jwt.sign({ userId, AccountID }, process.env.JWT_SECRET, { expiresIn: "15m" });
 
       // Set the new access token as a cookie
       res.cookie("accessToken", newAccessToken, {
@@ -27,7 +27,7 @@ const RefreshToken = async (req, res) => {
         maxAge: 15 * 60 * 1000, // 15 minutes
       });
 
-      res.status(200).json({ message: "Access token refreshed", accessToken: newAccessToken });
+      res.status(200).json({ message: "Access token refreshed", accessToken: newAccessToken, userId, AccountID });
     });
   } catch (error) {
     console.error("Error during token refresh:", error);
