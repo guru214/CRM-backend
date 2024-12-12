@@ -1,5 +1,6 @@
-const mongoose = require("mongoose");
-require("dotenv").config(); // Load environment variables
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+dotenv.config(); // Load environment variables
 
 const connectDB = async () => {
   try {
@@ -12,6 +13,15 @@ const connectDB = async () => {
   }
 };
 
-module.exports = connectDB;
+const closeDB = async() =>{
+  try{
+    mongoose.connection.close();
+    console.log("mongo connection closed!")
+  }
+  catch(err){
+    console.error("error closing the mongoDB:", err.message);
+  }
+}
+export { connectDB, closeDB};
 
  

@@ -1,16 +1,13 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
-import mongoose from 'mongoose';
 import AuthRoutes from './routes/UserRoutes.js';
 import WithdrawDetails from './routes/WithdrawDetailsRoutes.js';
 import ReqWithdraw from './routes/ReqWithdrawRoutes.js';
 import ReqDeposit from './routes/ReqDepositRoutes.js';
 import cookieParser from 'cookie-parser';
 import Refresh from './routes/refreshTokenRoute.js';
-// import logger from './loggers.js/log.js';
 import cors from 'cors';
-import sequelize from './config/db.js';  // Import the Sequelize instance
 
 const app = express();
 
@@ -34,38 +31,6 @@ app.use('/api/v1', Refresh);
 app.use('/api/v1/withdrawDetails', WithdrawDetails);
 app.use('/api/v1/withdraw', ReqWithdraw);
 app.use('/api/v1/deposit', ReqDeposit);
-
-
-// Connect to the database and start the server
-sequelize
-  .authenticate()
-  .then(() => {
-    console.log('Database connected successfully with Sequelize');
-
-    // Sync all models with the database
-    return sequelize.sync();
-  })
-  .catch((err) => {
-    console.error('Unable to connect to the database:', err);
-  });
-
-// MongoDB connection
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URL, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('MongoDB connected successfully');
-  } catch (err) {
-    console.error('MongoDB connection error:', err.message);
-    process.exit(1); // Exit process if connection fails
-  }
-};
-
-// Call the connectDB function to establish the database connection
-connectDB();
-
 
 // Error handling middleware
 app.use((err, req, res, next) => {

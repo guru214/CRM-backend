@@ -4,16 +4,33 @@ import dotenv from "dotenv";
 import { encrypt, decrypt } from "../lib/encryptDecrypt.js";
 dotenv.config(); // Load environment variables
 
+
+const encryptWithdrawReq = (withdrawData) => {
+  return {
+    withdraw_mode: encrypt(withdrawData.withdraw_mode) || null,
+    amount: withdrawData.amount || null,
+  };
+};
+
+const decryptWithdrawReq = (encryptedWithdrawData) => {
+  return encryptedWithdrawData.map((data) => ({
+    withdraw_mode: decrypt(data.withdraw_mode) || null,
+    amount: data.amount || null, 
+  }));
+};
+
 // Submit a new withdrawal request
 const submitWithdrawRequest = async (req, res) => {
   try {
     const AccountID  = req.user.AccountID;
-    const { withdraw_mode, amount } = req.body;
+    const { withdrawReq } = req.body;
+    console.log("req is:", withdrawReq)
 
     // Check if required fields are provided
-    if (!withdraw_mode || !amount) {
+    if (!withdrawReq) {
       return res.status(400).json({ message: "Missing required fields" });
     }
+    const encryptedWithdrawReq = encryptWithdrawReq(withdrawReq);
 
     // Fetch the user's balance
     const user = await User.findOne({
@@ -28,18 +45,17 @@ const submitWithdrawRequest = async (req, res) => {
 
     const currentBalance = user.amount; 
     console.log(currentBalance);
-    console.log(amount);
-    if (currentBalance < amount) {
+    console.log(withdrawReq.amount);
+    if (currentBalance < withdrawReq.amount) {
       return res.status(400).json({ message: "Insufficient balance" });
     }
 
     // Create the withdrawal request
-    const withdrawReq = await withdrawRequest.create({
+    const submitWithdrawReq = await withdrawRequest.create({
       AccountID,
-      withdraw_mode,
-      amount
+      ...encryptedWithdrawReq
     });
-    return res.status(201).json({ message: "Withdrawal request submitted successfully", withdrawReq });
+    return res.status(201).json({ message: "Withdrawal request submitted successfully", submitWithdrawReq });
   } catch (err) {
     console.error("Error during withdrawal request submission:", err);
     return res.status(500).json({ message: "Internal server error" });
