@@ -1,85 +1,81 @@
-import mongoose from "mongoose";
+import { connectDB, closeDB } from "../config/mongodb.js"; 
 import DepositRequest from "../models/DepositRequest.js";
+import { encrypt, decrypt } from "../lib/encryptDecrypt.js";
 
+const encryptDepositReq = (depositData) => {
+  return {
+    deposit_mode: encrypt(depositData.deposit_mode) || null,
+    amount: depositData.amount || null,
+    image_proof: encrypt(depositData.image_proof) || null,
+  };
+};
+
+const decryptDepositReq = (encryptedDepositData) => {
+  return encryptedDepositData.map((data) => ({
+    deposit_mode: decrypt(data.deposit_mode) || null,
+    amount: data.amount || null, 
+    image_proof: decrypt(data.image_proof) || null,
+  }));
+};
 
 // Submit a new deposit request
 const submitDepositRequest = async (req, res) => {
   try {
-    const { AccountID, deposit_mode, amount, image_proof } = req.body;
+    await connectDB();
+    const AccountID =  req.user.AccountID;
+    const { depositReq } = req.body;
+    console.log(depositReq)
 
-    if (!AccountID || !deposit_mode || !amount || !image_proof) {
-      return res.status(400).json({ message: "Missing required fields" });
+    if (!AccountID) {
+      return res.status(400).json({ message: "SOmethingg went wrong!!" });
     }
+    const encryptedDepositReqData = encryptDepositReq(depositReq);
 
-    // Start a session for transaction
-    const session = await mongoose.startSession();
-
-    try {
-      session.startTransaction();
-
+    // const encryptedAmount = encrypt(amount.toString());
       // Create a new deposit request
-      const newDepositRequest = new DepositRequest({
+      const newDepositRequest = await DepositRequest.create({
         AccountID,
-        Deposit_mode: deposit_mode,
-        amount,
-        image_proof,
+        ...encryptedDepositReqData
       });
 
-      await newDepositRequest.save({ session });
+      await newDepositRequest.save();
 
-      // Update the user's balance
-      const updateResult = await User.updateOne(
-        { AccountID },
-        { $inc: { amount } },
-        { session }
-      );
+      console.log("deposited amount:",encryptedDepositReqData.amount);
 
-      if (updateResult.modifiedCount > 0) {
-        // Commit the transaction
-        await session.commitTransaction();
-        return res.status(201).json({
-          message: "Deposit request submitted successfully and balance updated.",
-        });
-      } else {
-        // Rollback the transaction
-        await session.abortTransaction();
-        return res.status(500).json({
-          message: "Failed to update balance.",
-        });
-      }
+      res.status(201).json({message: "deposit request successfully!"})
     } catch (error) {
-      // Rollback the transaction in case of error
-      await session.abortTransaction();
       console.error("Error submitting deposit request:", error);
       return res.status(500).json({ message: "Internal server error" });
-    } finally {
-      session.endSession();
+    }finally{
+      await closeDB();
     }
-  } catch (error) {
-    console.error("Error submitting deposit request:", error);
-    return res.status(500).json({ message: "Internal server error" });
   }
-};
 
 // List all deposit requests for a given AccountID
 const listDepositRequests = async (req, res) => {
   try {
-    const { AccountID } = req.params;
+    await connectDB();
+    const AccountID = req.user.AccountID;
 
     if (!AccountID) {
       return res.status(400).json({ message: "AccountID is required" });
     }
 
-    const requests = await DepositRequest.find({ AccountID });
+    const depositData = await DepositRequest.find({ AccountID });
 
-    if (requests.length === 0) {
+    console.log(depositData)
+    if (depositData.length === 0) {
       return res.status(404).json({ message: "No deposit requests found" });
     }
 
-    res.json(requests);
+    const decryptedDepositData = decryptDepositReq(depositData);
+    console.log(decryptedDepositData);
+    res.json(decryptedDepositData);
   } catch (error) {
     console.error("Error listing deposit requests:", error);
     res.status(500).json({ message: "Internal server error" });
+  } finally{
+    await closeDB();
   }
 };
 
