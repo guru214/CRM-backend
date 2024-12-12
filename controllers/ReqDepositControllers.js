@@ -1,53 +1,81 @@
+import { connectDB , closeDB} from "../config/mongodb.js"; 
 import DepositRequest from "../models/DepositRequest.js";
+import { encrypt, decrypt } from "../lib/encryptDecrypt.js";
+
+const encryptDepositReq = (depositData) => {
+  return {
+    deposit_mode: encrypt(depositData.deposit_mode) || null,
+    amount: depositData.amount || null,
+    image_proof: encrypt(depositData.image_proof) || null,
+  };
+};
+
+const decryptDepositReq = (encryptedDepositData) => {
+  return encryptedDepositData.map((data) => ({
+    deposit_mode: decrypt(data.deposit_mode) || null,
+    amount: data.amount || null, 
+    image_proof: decrypt(data.image_proof) || null,
+  }));
+};
 
 // Submit a new deposit request
 const submitDepositRequest = async (req, res) => {
   try {
-    const { AccountID, Deposit_mode, amount, image_proof } = req.body;
+    await connectDB();
+    const AccountID =  req.user.AccountID;
+    const { depositReq } = req.body;
+    console.log(depositReq)
 
-    if (!AccountID || !Deposit_mode || !amount || !image_proof) {
-      return res.status(400).json({ message: "Missing required fields" });
+    if (!AccountID) {
+      return res.status(400).json({ message: "Somethingg went wrong!!" });
     }
+    const encryptedDepositReqData = encryptDepositReq(depositReq);
 
-    // Create a new deposit request
-    const newDepositRequest = new DepositRequest({
-      AccountID,
-      Deposit_mode: Deposit_mode,
-      amount,
-      image_proof,
-    });
+    // const encryptedAmount = encrypt(amount.toString());
+      // Create a new deposit request
+      const newDepositRequest = await DepositRequest.create({
+        AccountID,
+        ...encryptedDepositReqData
+      });
 
-    // Save the deposit request to the database
-    await newDepositRequest.save();
+      await newDepositRequest.save();
 
-    res.status(201).json({
-      message: "Deposit request submitted successfully.",
-    });
-  } catch (error) {
-    console.error("Error submitting deposit request:", error);
-    res.status(500).json({ message: "Internal server error" });
+      console.log("deposited amount:",encryptedDepositReqData.amount);
+
+      res.status(201).json({message: "deposit request successfully!"})
+    } catch (error) {
+      console.error("Error submitting deposit request:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }finally{
+      await closeDB();
+    }
   }
-};
 
 // List all deposit requests for a given AccountID
 const listDepositRequests = async (req, res) => {
   try {
-    const { AccountID } = req.params;
+    await connectDB();
+    const AccountID = req.user.AccountID;
 
     if (!AccountID) {
       return res.status(400).json({ message: "AccountID is required" });
     }
 
-    const requests = await DepositRequest.find({ AccountID });
+    const depositData = await DepositRequest.find({ AccountID });
 
-    if (requests.length === 0) {
+    console.log(depositData)
+    if (depositData.length === 0) {
       return res.status(404).json({ message: "No deposit requests found" });
     }
 
-    res.json(requests);
+    const decryptedDepositData = decryptDepositReq(depositData);
+    console.log(decryptedDepositData);
+    res.json(decryptedDepositData);
   } catch (error) {
     console.error("Error listing deposit requests:", error);
     res.status(500).json({ message: "Internal server error" });
+  } finally{
+    await closeDB();
   }
 };
 
