@@ -4,17 +4,17 @@ const Schema = mongoose.Schema;
 const withdrawRequestSchema = new Schema({
     AccountID : {
         type: String,
-        require: true,
+        required: true,
         ref: 'User'
     },
     withdraw_mode : {
         type: String,
         enum: ['BANK', 'UPI', 'BTC', 'ETH', 'NETELLER'],
-        require: true
+        required: true
     },
     amount : {
         type: Number,
-        require: true
+        required: true
     },
     status: {
         type: String,

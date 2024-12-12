@@ -7,6 +7,6 @@ const router = express.Router();
 
 // Define routes with verifyToken middleware
 router.post('/', verifyToken, submitDepositRequest);
-router.get('/:AccountID', verifyToken, listDepositRequests);
+router.get('/', verifyToken, listDepositRequests);
 
 export default router;

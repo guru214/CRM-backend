@@ -39,8 +39,6 @@ const decryptWithdrawData = (encryptedData) => {
 const submitWithdrawDetails = async (req, res) => {
   try {
     const AccountID = req.user.AccountID;
-    // console.log(decoded.AccountID);
-    console.log(AccountID);
     const {  withdrawData } = req.body;
 
     // Encrypt withdraw data
