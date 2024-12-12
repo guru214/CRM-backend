@@ -1,15 +1,14 @@
 
 import jwt from "jsonwebtoken";
-import mySqlPool from '../config/db.js';
 import dotenv from "dotenv";
-import bcrypt from 'bcrypt';
 import { encrypt, decrypt } from "../lib/encryptDecrypt.js";
 import { generateAccountID, generateReferralID } from "../lib/uidGeneration.js";
 import { RESPONSE_MESSAGES } from "../lib/constants.js";
-import { encryptPassword, decryptPassword, generateRandomString } from "../lib/encryptDecryptPassword.js"
+import { encryptPassword, generateRandomString } from "../lib/encryptDecryptPassword.js"
 import nodemailer from 'nodemailer';
 import User from "../models/User.js";
 import crypto from 'crypto';
+import { openConnection, closeConnection } from "../config/sqldb.js";
 
 dotenv.config(); // Load environment variables
 
@@ -17,7 +16,6 @@ dotenv.config(); // Load environment variables
 const generateTokens = (userId, AccountID) => {
   const accessToken = jwt.sign({ userId, AccountID }, process.env.JWT_SECRET, { expiresIn: "50m" });
   const refreshToken = jwt.sign({ userId, AccountID }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
-
   return { accessToken, refreshToken };
 };
 
@@ -49,6 +47,7 @@ const decryptUserData = (encryptedData) => {
 // Register function
 const Register = async (req, res) => {
   try {
+    await openConnection();    
     const { FullName, Email, Password, Phone, Account_Type, Address, documentType, documentNumber } = req.body;
 
     // Check if the user already exists in the database
@@ -70,16 +69,8 @@ const Register = async (req, res) => {
     console.log("encrypted password", encryptedPassword);
 
     // Generate unique AccountID and ReferralID
-    const AccountID = await generateAccountID();
-    const ReferralID = await generateReferralID(FullName);
-
-    // Insert new user into the database
-    // const [result] = await mySqlPool.query(
-    //   `INSERT INTO users (FullName, Email, Password, Phone, Account_Type, Address, documentType, documentNumber, AccountID, ReferralID, iv) 
-    //    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    //   [encryptedUserData.FullName, Email, encryptedPassword, encryptedUserData.Phone, encryptedUserData.Account_Type, encryptedUserData.Address, encryptedUserData.documentType, encryptedUserData.documentNumber, AccountID, ReferralID, securedIv]
-    // );
-
+    const AccountID = generateAccountID();
+    const ReferralID = generateReferralID(FullName);
     const newUser = await User.create({
       FullName: encryptedUserData.FullName,
       Email: Email, // Email is not encrypted for uniqueness checks
@@ -93,18 +84,6 @@ const Register = async (req, res) => {
       ReferralID,
       iv: securedIv,
     });
-
-
-    //     if (result.affectedRows > 0) {
-    //       res.status(201).json({ message: "User registered successfully", AccountID, ReferralID });
-    //     } else {
-    //       res.status(500).json({ message: "Failed to register user" });
-    //     }
-    //   } catch (error) {
-    //     console.error("Error during user registration:", error);
-    //     res.status(500).json({ message: "Internal server error" });
-    //   }
-    // };
     if (newUser) {
       res.status(201).json({ message: "User registered successfully", AccountID, ReferralID });
     } else {
@@ -113,6 +92,8 @@ const Register = async (req, res) => {
   } catch (error) {
     console.error("Error during user registration:", error);
     res.status(500).json({ message: "Internal server error" });
+  } finally{
+    await closeConnection();
   }
 };
 
@@ -121,6 +102,7 @@ const Register = async (req, res) => {
 
 const Login = async (req, res) => {
   try {
+    await openConnection();
     const { Email, Password } = req.body;
 
     // Check if email and password are provided
@@ -178,12 +160,15 @@ const Login = async (req, res) => {
   } catch (error) {
     console.error("Error during user login:", error);
     return res.status(500).json({ message: "Internal server error" });
+  }finally{
+    await closeConnection();
   }
 };
 
 // Profile function
 const Profile = async (req, res) => {
   try {
+    await openConnection();
     const id = req.user.userId; // Extract user ID from the request (e.g., from middleware)
 
     // Query the user while excluding sensitive fields
@@ -221,12 +206,15 @@ const Profile = async (req, res) => {
   } catch (error) {
     console.error("Error fetching user profile:", error);
     return res.status(500).json({ message: "Server error", error });
+  }finally{
+    await closeConnection();
   }
 };
 
 // Update Profile function
 const UpdateProfile = async (req, res) => {
   try {
+    await openConnection();
     const id = req.user.userId; // Ensure this comes from JWT middleware
     const updates = encryptUserData(req.body); // Encrypt incoming data
 
@@ -275,12 +263,15 @@ const UpdateProfile = async (req, res) => {
   } catch (error) {
     console.error("Error updating user profile:", error);
     return res.status(500).json({ message: "Server error", error });
+  }finally{
+    await closeConnection();
   }
 };
 
 
 const KYCUpdate = async (req, res) => {
   try {
+    await openConnection();
     const id = req.user.userId; // Extract user ID from the authenticated request
     const { documentType, documentNumber } = req.body;
 
@@ -319,12 +310,15 @@ const KYCUpdate = async (req, res) => {
   } catch (error) {
     console.error("Error during KYC update:", error);
     return res.status(500).json({ message: "Internal server error", error });
+  }finally{
+    await closeConnection();
   }
 };
 
 
 const ChangePassword = async (req, res) => {
   try {
+    await openConnection();
     const id = req.user.userId; // Extract user ID from the authenticated request
     const { oldPassword, newPassword } = req.body;
 
@@ -370,12 +364,15 @@ const ChangePassword = async (req, res) => {
   } catch (error) {
     console.error("Error during password change:", error);
     return res.status(500).json({ message: "Internal server error", error });
+  }finally{
+    await closeConnection();
   }
 };
 
 
 const ForgetPassword = async (req, res) => {
   try {
+    await openConnection();
     const { Email } = req.body;
 
     // Validate input
@@ -425,11 +422,14 @@ const ForgetPassword = async (req, res) => {
   } catch (error) {
     console.error("Forgot Password Error:", error);
     return res.status(500).json({ message: "Internal server error.", error });
+  }finally{
+    await closeConnection();
   }
 };
 
 const ResetPassword = async (req, res, next) => {
   try {
+    await openConnection();
     const { token } = req.params;
     // const id = req.user.userId; // Extract user ID from the authenticated request
     console.log(id)
@@ -476,6 +476,8 @@ const ResetPassword = async (req, res, next) => {
 
     // Pass other errors to the global error handler
     next(error);
+  }finally{
+    await closeConnection();
   }
 };
 
@@ -483,6 +485,7 @@ const ResetPassword = async (req, res, next) => {
 // Logout Function
 const Logout = async (req, res) => {
   try {
+    await openConnection();
     const { refreshToken } = req.cookies;
 
     // Check if the refresh token is provided
@@ -513,6 +516,8 @@ const Logout = async (req, res) => {
   } catch (error) {
     console.error("Error during logout:", error);
     return res.status(500).json({ message: "Internal server error" });
+  }finally{
+    await closeConnection();
   }
 };
 
