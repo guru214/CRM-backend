@@ -10,6 +10,7 @@ const encryptDepositReq = (depositData) => {
   };
 };
 
+
 const decryptDepositReq = (encryptedDepositData) => {
   return encryptedDepositData.map((data) => ({
     deposit_mode: decrypt(data.deposit_mode) || null,

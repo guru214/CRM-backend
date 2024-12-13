@@ -102,6 +102,7 @@ const Register = async (req, res) => {
 
 const Login = async (req, res) => {
   try {
+    
     await openConnection();
     const { Email, Password } = req.body;
 
