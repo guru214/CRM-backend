@@ -1,34 +1,28 @@
-import { Sequelize } from 'sequelize';
-import dotenv from 'dotenv';
+import { sequelize } from './sqlconnection.js';
 
-dotenv.config(); // Load environment variables
-
-// Create a new Sequelize instance
-const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
-  host: process.env.DB_HOST,
-  dialect: 'mysql', // Specify the dialect for MySQL
-  logging: false, // Disable logging; default: console.log
-  port: process.env.DB_PORT
-});
-
-// Function to open the connection
-const openConnection = async () => {
+const sequelizeMiddleware = async (req, res, next) => {
   try {
-    await sequelize.authenticate();
+    await sequelize.authenticate(); // Ensure the connection is alive
+    req.sequelize = sequelize;
     console.log('Connection has been established successfully.');
-  } catch (error) {
-    console.error('Unable to connect to the database:', error);
+    next();
+  } catch (err) {
+    console.error('Unable to connect to the database:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-// Function to close the connection
-const closeConnection = async () => {
-  try {
-    await sequelize.close();
-    console.log('Connection has been closed successfully.');
-  } catch (error) {
-    console.error('Error closing the connection:', error);
-  }
+// Close the connection after the response is sent
+const closeSequelizeConnection = (req, res, next) => {
+  res.on('finish', async () => {
+    try {
+      // No need to close here, as pooling handles this
+      console.log('Request processing finished.');
+    } catch (err) {
+      console.error('Error closing the Sequelize connection:', err.message);
+    }
+  });
+  next();
 };
 
-export { openConnection, closeConnection, sequelize };
+export { sequelizeMiddleware, closeSequelizeConnection };
