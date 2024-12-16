@@ -4,9 +4,9 @@ import { encrypt, decrypt } from "../lib/encryptDecrypt.js";
 
 const encryptDepositReq = (depositData) => {
   return {
-    deposit_mode: encrypt(depositData.deposit_mode) || null,
-    amount: depositData.amount || null,
-    image_proof: encrypt(depositData.image_proof) || null,
+    deposit_mode: depositData.deposit_mode ? encrypt(depositData.deposit_mode) : null,
+    amount: depositData.amount ? depositData.amount : null, // No encryption for numeric value
+    image_proof: depositData.image_proof ? encrypt(depositData.image_proof) : null,
   };
 };
 
@@ -23,35 +23,38 @@ const decryptDepositReq = (encryptedDepositData) => {
 const submitDepositRequest = async (req, res) => {
   try {
     await connectDB();
-    const AccountID =  req.user.AccountID;
-    const { depositReq } = req.body;
-    console.log(depositReq)
+    const AccountID = req.user.AccountID;
+    const { amount, deposit_mode, image_proof } = req.body;
 
-    if (!AccountID) {
-      return res.status(400).json({ message: "Somethingg went wrong!!" });
+    // Input validation
+    if (!AccountID || !amount || !deposit_mode || !image_proof) {
+      return res.status(400).json({ message: "All fields are required." });
     }
+
+    const depositReq = { amount, deposit_mode, image_proof };
+
     const encryptedDepositReqData = encryptDepositReq(depositReq);
 
-    // const encryptedAmount = encrypt(amount.toString());
-      // Create a new deposit request
-      const newDepositRequest = await DepositRequest.create({
-        AccountID,
-        ...encryptedDepositReqData
-      });
+    // Create a new deposit request
+    const newDepositRequest = await DepositRequest.create({
+      AccountID,
+      ...encryptedDepositReqData,
+    });
 
-      await newDepositRequest.save();
-
-      console.log("deposited amount:",encryptedDepositReqData.amount);
-
-      res.status(201).json({message: "deposit request successfully!"})
-    } catch (error) {
-      console.error("Error submitting deposit request:", error);
-      return res.status(500).json({ message: "Internal server error" });
-    }finally{
-      await closeDB();
-    }
+    res.status(201).json({ message: "Deposit request submitted successfully!" });
+  } catch (error) {
+    console.error("Error submitting deposit request:", error);
+    res.status(500).json({ message: "Internal server error" });
+  } finally {
+    await closeDB();
   }
+};
 
+    
+    
+
+   
+     
 // List all deposit requests for a given AccountID
 const listDepositRequests = async (req, res) => {
   try {
