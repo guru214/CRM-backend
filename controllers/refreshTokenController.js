@@ -19,13 +19,13 @@ const RefreshToken = async (req, res) => {
       const { userId, AccountID } = decoded;
 
       // Generate a new access token
-      const newAccessToken = jwt.sign({ userId, AccountID }, process.env.JWT_SECRET, { expiresIn: "15m" });
+      const newAccessToken = jwt.sign({ userId, AccountID }, process.env.JWT_SECRET, { expiresIn: "60m" });
 
       // Set the new access token as a cookie
       res.cookie("accessToken", newAccessToken, {
         httpOnly: true,
         secure: false, // Set to `true` in production if using HTTPS
-        maxAge: 15 * 60 * 1000, // 15 minutes
+        maxAge: 60 * 60 * 1000, // 60 minutes
       });
 
       res.status(200).json({ message: "Access token refreshed", accessToken: newAccessToken, userId, AccountID });

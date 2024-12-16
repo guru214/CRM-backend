@@ -5,6 +5,7 @@ import AuthRoutes from './routes/UserRoutes.js';
 import WithdrawDetails from './routes/WithdrawDetailsRoutes.js';
 import ReqWithdraw from './routes/ReqWithdrawRoutes.js';
 import ReqDeposit from './routes/ReqDepositRoutes.js';
+import UserProof from './routes/userProofRoutes.js';
 import cookieParser from 'cookie-parser';
 import { sequelize } from './config/sqlconnection.js';
 import Refresh from './routes/refreshTokenRoute.js';
@@ -35,6 +36,8 @@ app.use('/api/v1', Refresh);
 app.use('/api/v1/withdrawDetails', WithdrawDetails);
 app.use('/api/v1/withdraw', ReqWithdraw);
 app.use('/api/v1/deposit', ReqDeposit);
+app.use('/api/v1/userProof', UserProof);
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {

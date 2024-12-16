@@ -5,9 +5,11 @@ const Schema = mongoose.Schema;
 const depositRequestSchema = new Schema({
   AccountID: { type: String, required: true, ref: 'User'  },
   deposit_mode: { type: String, required: true },
-  amount: { type: Number, required: true },
+  amount: { type: String, required: true },
   image_proof: { type: String, required: true },
   status: { type: String, enum: ['pending', 'success', 'failure'], default: "pending" },
+  requestedAt : { type: Date, default: Date.now()},
+  updatedAt : { type: Date, default: null }
 });
 
 const DepositRequest = mongoose.model("DepositRequest", depositRequestSchema);

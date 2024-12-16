@@ -35,14 +35,6 @@ User.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
-    documentType: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    documentNumber: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
     AccountID: {
       type: DataTypes.STRING,
       primaryKey: true,
@@ -70,12 +62,8 @@ User.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
-    token:{
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
     refreshToken: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(512),
       allowNull: true,
     },
   },
