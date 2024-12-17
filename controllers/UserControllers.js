@@ -51,7 +51,7 @@ const Register = async (req, res) => {
     // Check if the user already exists in the database
     const existingUser = await User.findOne({ where: { Email } });
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({ message: RESPONSE_MESSAGES.ALREADY_EXIST.message });
     }
 
     // Encrypt user data
@@ -98,7 +98,7 @@ const Register = async (req, res) => {
 // Login function
 const Login = async (req, res) => {
   try {
-    //await openconnection();
+    //await openConnection();
     const { Email, Password } = req.body;
 
     // Check if email and password are provided

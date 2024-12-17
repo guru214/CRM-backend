@@ -19,7 +19,6 @@ const encryptDepositReq = (depositData) => {
   };
 };
 
-// Helper function to decrypt deposit request data
 const decryptDepositReq = (encryptedDepositData) => {
   return encryptedDepositData.map((data) => {
     const decryptedImageBase64 = decrypt(data.image_proof);

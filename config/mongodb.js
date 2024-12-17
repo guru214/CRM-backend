@@ -4,7 +4,11 @@ dotenv.config(); // Load environment variables
 
 const connectDB = async () => {
   try {
+    
     const mongoURI = process.env.MONGO_URL; // Access the MONGO_URL from .env
+    console.log(mongoURI)
+   
+
     await mongoose.connect(mongoURI);
     console.log("MongoDB Connected Successfully!");
   } catch (err) {
@@ -24,3 +28,4 @@ const closeDB = async() =>{
 }
 export { connectDB, closeDB};
 
+ 
