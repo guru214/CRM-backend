@@ -38,6 +38,4 @@ const RefreshToken = async (req, res) => {
   }
 };
 
-
-
 export default RefreshToken;
