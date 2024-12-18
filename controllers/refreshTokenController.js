@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken';
-import { connectDB, closeDB } from '../config/mongodb.js';
+import { openConnection, closeConnection } from '../config/sqlconnection.js'; 
 const RefreshToken = async (req, res) => {
   try {
-    await connectDB();
+    await openConnection();
     // Make sure you are using cookie-parser and accessing req.cookies
     const { refreshToken } = req.cookies;
 
@@ -34,7 +34,7 @@ const RefreshToken = async (req, res) => {
     console.error("Error during token refresh:", error);
     res.status(500).json({ message: "Internal server error" });
   }finally{
-    await closeDB();
+    await closeConnection();
   }
 };
 

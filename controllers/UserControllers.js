@@ -8,7 +8,7 @@ import { encryptPassword, generateRandomString } from "../lib/encryptDecryptPass
 import nodemailer from 'nodemailer';
 import User from "../models/User.js";
 import crypto from 'crypto';
-// import { openConnection, closeConnection } from "../config/sqlconnection.js";
+import { openConnection, closeConnection } from "../config/sqlconnection.js";
 
 dotenv.config(); // Load environment variables
 
@@ -45,7 +45,7 @@ const decryptUserData = (encryptedData) => {
 // Register function
 const Register = async (req, res) => {
   try {
-    //await openconnection();    
+    await openConnection();    
     const { FullName, Email, Password, Phone, Account_Type, Address, documentType, documentNumber } = req.body;
 
     // Check if the user already exists in the database
@@ -91,14 +91,14 @@ const Register = async (req, res) => {
     console.error("Error during user registration:", error);
     res.status(500).json({ message: "Internal server error" });
   } finally{
-    //await closeConnection();
+    await closeConnection();
   }
 };
 
 // Login function
 const Login = async (req, res) => {
   try {
-    //await openConnection();
+    await openConnection();
     const { Email, Password } = req.body;
 
     // Check if email and password are provided
@@ -163,14 +163,14 @@ const Login = async (req, res) => {
     console.error("Error during user login:", error);
     return res.status(500).json({ message: "Internal server error" });
   }finally{
-    //await closeConnection();
+    await closeConnection();
   }
 };
 
 // Profile function
 const Profile = async (req, res) => {
   try {
-    //await openconnection();
+    await openConnection();
     const id = req.user.userId; // Extract user ID from the request (e.g., from middleware)
 
     // Query the user while excluding sensitive fields
@@ -209,14 +209,14 @@ const Profile = async (req, res) => {
     console.error("Error fetching user profile:", error);
     return res.status(500).json({ message: "Server error", error });
   }finally{
-    //await closeConnection();
+    await closeConnection();
   }
 };
 
 // Update Profile function
 const UpdateProfile = async (req, res) => {
   try {
-    //await openconnection();
+    await openConnection();
     const id = req.user.userId; // Ensure this comes from JWT middleware
     const updates = encryptUserData(req.body); // Encrypt incoming data
 
@@ -264,13 +264,13 @@ const UpdateProfile = async (req, res) => {
     console.error("Error updating user profile:", error);
     return res.status(500).json({ message: "Server error", error });
   }finally{
-    //await closeConnection();
+    await closeConnection();
   }
 };
 
 const KYCUpdate = async (req, res) => {
   try {
-    //await openconnection();
+    await openConnection();
     const id = req.user.userId; // Extract user ID from the authenticated request
     const { documentType, documentNumber } = req.body;
 
@@ -310,13 +310,13 @@ const KYCUpdate = async (req, res) => {
     console.error("Error during KYC update:", error);
     return res.status(500).json({ message: "Internal server error", error });
   }finally{
-    //await closeConnection();
+    await closeConnection();
   }
 };
 
 const ChangePassword = async (req, res) => {
   try {
-    //await openconnection();
+    await openConnection();
     const id = req.user.userId; // Extract user ID from the authenticated request
     const { oldPassword, newPassword } = req.body;
 
@@ -356,13 +356,13 @@ const ChangePassword = async (req, res) => {
     console.error("Error during password change:", error);
     return res.status(500).json({ message: "Internal server error", error });
   }finally{
-    //await closeConnection();
+    await closeConnection();
   }
 };
 
 const ForgetPassword = async (req, res) => {
   try {
-    //await openconnection();
+    await openConnection();
     const { Email } = req.body;
 
     // Validate input
@@ -413,13 +413,13 @@ const ForgetPassword = async (req, res) => {
     console.error("Forgot Password Error:", error);
     return res.status(500).json({ message: "Internal server error.", error });
   }finally{
-    //await closeConnection();
+    await closeConnection();
   }
 };
 
 const ResetPassword = async (req, res, next) => {
   try {
-    //await openconnection();
+    await openConnection();
     const { token } = req.params;
     // const id = req.user.userId; // Extract user ID from the authenticated request
     console.log(id)
@@ -467,14 +467,14 @@ const ResetPassword = async (req, res, next) => {
     // Pass other errors to the global error handler
     next(error);
   }finally{
-    //await closeConnection();
+    await closeConnection();
   }
 };
 
 // Logout Function
 const Logout = async (req, res) => {
   try {
-    //await openconnection();
+    await openConnection();
     const { refreshToken } = req.cookies;
 
     // Check if the refresh token is provided
@@ -506,7 +506,7 @@ const Logout = async (req, res) => {
     console.error("Error during logout:", error);
     return res.status(500).json({ message: "Internal server error" });
   }finally{
-    //await closeConnection();
+    await closeConnection();
   }
 };
 
@@ -562,7 +562,7 @@ export { Register, Login, Profile, UpdateProfile, ChangePassword, ForgetPassword
 // // Register function
 // const Register = async (req, res) => {
 //   try {
-//     //await openconnection();    
+//     //await openConnection();    
 //     const { FullName, Email, Password, Phone, Account_Type, Address, documentType, documentNumber } = req.body;
 
 //     // Check if the user already exists in the database
@@ -615,7 +615,7 @@ export { Register, Login, Profile, UpdateProfile, ChangePassword, ForgetPassword
 // // Login function
 // const Login = async (req, res) => {
 //   try {
-//     //await openconnection();
+//     //await openConnection();
 //     const { Email, Password } = req.body;
 
 //     // Check if email and password are provided
@@ -686,7 +686,7 @@ export { Register, Login, Profile, UpdateProfile, ChangePassword, ForgetPassword
 // // Profile function
 // const Profile = async (req, res) => {
 //   try {
-//     //await openconnection();
+//     //await openConnection();
 //     const id = req.user.userId; // Extract user ID from the request (e.g., from middleware)
 
 //     // Query the user while excluding sensitive fields
@@ -732,7 +732,7 @@ export { Register, Login, Profile, UpdateProfile, ChangePassword, ForgetPassword
 // // Update Profile function
 // const UpdateProfile = async (req, res) => {
 //   try {
-//     //await openconnection();
+//     //await openConnection();
 //     const id = req.user.userId; // Ensure this comes from JWT middleware
 //     const updates = encryptUserData(req.body); // Encrypt incoming data
 
@@ -786,7 +786,7 @@ export { Register, Login, Profile, UpdateProfile, ChangePassword, ForgetPassword
 
 // const KYCUpdate = async (req, res) => {
 //   try {
-//     //await openconnection();
+//     //await openConnection();
 //     const id = req.user.userId; // Extract user ID from the authenticated request
 //     const { documentType, documentNumber } = req.body;
 
@@ -832,7 +832,7 @@ export { Register, Login, Profile, UpdateProfile, ChangePassword, ForgetPassword
 
 // const ChangePassword = async (req, res) => {
 //   try {
-//     //await openconnection();
+//     //await openConnection();
 //     const id = req.user.userId; // Extract user ID from the authenticated request
 //     const { oldPassword, newPassword } = req.body;
 
@@ -878,7 +878,7 @@ export { Register, Login, Profile, UpdateProfile, ChangePassword, ForgetPassword
 
 // const ForgetPassword = async (req, res) => {
 //   try {
-//     //await openconnection();
+//     //await openConnection();
 //     const { Email } = req.body;
 
 //     // Validate input
@@ -935,7 +935,7 @@ export { Register, Login, Profile, UpdateProfile, ChangePassword, ForgetPassword
 
 // const ResetPassword = async (req, res, next) => {
 //   try {
-//     //await openconnection();
+//     //await openConnection();
 //     const { token } = req.params;
 //     // const id = req.user.userId; // Extract user ID from the authenticated request
 //     console.log(id)
@@ -990,7 +990,7 @@ export { Register, Login, Profile, UpdateProfile, ChangePassword, ForgetPassword
 // // Logout Function
 // const Logout = async (req, res) => {
 //   try {
-//     //await openconnection();
+//     //await openConnection();
 //     const { refreshToken } = req.cookies;
 
 //     // Check if the refresh token is provided

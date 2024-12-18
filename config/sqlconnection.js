@@ -31,8 +31,8 @@ const openConnection = async () => {
 // Function to close all connections
 const closeConnection = async () => {
   try {
-    await sequelize.close();
-    console.log('Connection has been closed successfully.');
+    sequelize.connectionManager.releaseConnection();
+    console.log('Pool connection has been released.');
   } catch (error) {
     console.error('Error closing the connection:', error.message);
   }
