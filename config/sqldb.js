@@ -1,10 +1,12 @@
 import { sequelize } from './sqlconnection.js';
 
-const sequelizeMiddleware = async (req, res, next) => {
+const openSequelizeConnection = async (req, res, next) => {
   try {
     await sequelize.authenticate(); // Ensure the connection is alive
     req.sequelize = sequelize;
     console.log('Connection has been established successfully.');
+    await sequelize.sync(); // Sync all defined models to the database 
+    console.log('All models were synchronized successfully.');
     next();
   } catch (err) {
     console.error('Unable to connect to the database:', err);
@@ -25,4 +27,4 @@ const closeSequelizeConnection = (req, res, next) => {
   next();
 };
 
-export { sequelizeMiddleware, closeSequelizeConnection };
+export { openSequelizeConnection, closeSequelizeConnection };

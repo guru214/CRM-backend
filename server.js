@@ -10,7 +10,7 @@ import cookieParser from 'cookie-parser';
 import { sequelize } from './config/sqlconnection.js';
 import Refresh from './routes/refreshTokenRoute.js';
 import cors from 'cors';
-import { sequelizeMiddleware, closeSequelizeConnection} from './config/sqldb.js'
+import { openSequelizeConnection, closeSequelizeConnection} from './config/sqldb.js'
 const app = express();
 
 dotenv.config();
@@ -27,7 +27,7 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(sequelizeMiddleware); 
+app.use(openSequelizeConnection); 
 app.use(closeSequelizeConnection); // Close connection middleware
 
 // Routes

@@ -2,6 +2,7 @@ import { connectDB, closeDB } from "../config/mongodb.js";
 import DepositRequest from "../models/DepositRequest.js";
 import { encrypt, decrypt } from "../lib/encryptDecrypt.js";
 import fs from "fs";
+import User from "../models/User.js";
 
 // Helper function to encrypt deposit request data
 const encryptDepositReq = (depositData) => {
@@ -52,9 +53,18 @@ const submitDepositRequest = async (req, res) => {
       ...encryptedDepositReqData,
     });
 
-    await newDepositRequest.save();
+    const updateUserAmount = await User.findOne({where: {AccountID: AccountID}});
+    if(!updateUserAmount){
+      res.status(404).json({message: "user not found."});
+    }
+    
+    const existingUserAmount = parseFloat(decrypt(updateUserAmount.amount))
+    const depositedUserAmount = parseFloat(depositData.amount);
+    const updatedAmount = existingUserAmount + depositedUserAmount;
 
-    console.log("Deposited amount:", depositData.amount);
+    updateUserAmount.amount = encrypt(updatedAmount.toString());
+    await updateUserAmount.save();
+    await newDepositRequest.save();
 
     res.status(201).json({ message: "Deposit request submitted successfully!" });
   } catch (error) {

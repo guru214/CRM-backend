@@ -25,20 +25,22 @@ const generateTokens = (userId, AccountID) => {
 // Function to encrypt user data
 const encryptUserData = (userData) => {
   return {
-    FullName: encrypt(userData.FullName),
-    Phone: encrypt(userData.Phone),
-    Account_Type: encrypt(userData.Account_Type),
-    Address: encrypt(userData.Address),
+    FullName: userData.FullName? encrypt(userData.FullName) : "",
+    Email: userData.Email? userData.Email : "", //for some reason
+    Phone: userData.Phone? encrypt(userData.Phone) : "",
+    Account_Type: userData.Account_Type? encrypt(userData.Account_Type) : "",
+    Address: userData.Address? encrypt(userData.Address) : "",
   };
 };
 
 // Function to decrypt user data
 const decryptUserData = (encryptedData) => {
   return {
-    FullName: decrypt(encryptedData.FullName),
-    Phone: decrypt(encryptedData.Phone),
-    Account_Type: decrypt(encryptedData.Account_Type),
-    Address: decrypt(encryptedData.Address),
+    FullName: encryptedData.FullName? decrypt(encryptedData.FullName) : "",
+    Email: encryptedData.Email? encryptedData.Email : "", //for some reason
+    Phone: encryptedData.Phone? decrypt(encryptedData.Phone) : "",
+    Account_Type: encryptedData.Account_Type? decrypt(encryptedData.Account_Type) : "",
+    Address: encryptedData.Address? decrypt(encryptedData.Address) : "",
   };
 };
 
@@ -182,10 +184,9 @@ const Profile = async (req, res) => {
         "Phone",
         "Account_Type",
         "Address",
-        "documentType",
-        "documentNumber",
         "AccountID",
         "ReferralID",
+        "amount",
       ],
     });
 
@@ -223,19 +224,27 @@ const UpdateProfile = async (req, res) => {
     console.log('Updating user with ID:', id);
     console.log('Updates:', updates);
 
+    // Construct dynamic update fields
+    const updateFields = {};
+
+    if (updates.FullName) {
+      updateFields.FullName = updates.FullName;
+    }
+
+    if (updates.Account_Type) {
+      updateFields.Account_Type = updates.Account_Type;
+    }
+
+    if (updates.Address) {
+      updateFields.Address = updates.Address;
+    }
+
     // Update the user's profile with the provided data
     const [affectedRows] = await User.update(
-      {
-        FullName: updates.FullName,
-        Phone: updates.Phone,
-        Account_Type: updates.Account_Type,
-        Address: updates.Address,
-        documentType: updates.documentType,
-        documentNumber: updates.documentNumber,
-      },
+      updateFields,
       {
         where: { id },
-        individualHooks: true, //Ensure hooks run if any (e.g., data validation or transformations)
+        individualHooks: true, // Ensure hooks run if any (e.g., data validation or transformations)
       }
     );
 
@@ -248,14 +257,8 @@ const UpdateProfile = async (req, res) => {
       where: { id },
       attributes: [
         "FullName",
-        "Email",
-        "Phone",
         "Account_Type",
         "Address",
-        "documentType",
-        "documentNumber",
-        "AccountID",
-        "ReferralID",
       ],
     });
     const decryptedUpdatedUserData = decryptUserData(updatedUser.toJSON());
@@ -263,10 +266,11 @@ const UpdateProfile = async (req, res) => {
   } catch (error) {
     console.error("Error updating user profile:", error);
     return res.status(500).json({ message: "Server error", error });
-  }finally{
+  } finally {
     await closeConnection();
   }
 };
+
 
 const KYCUpdate = async (req, res) => {
   try {

@@ -47,8 +47,8 @@ User.init(
       unique: true,
     },
     amount: {
-      type: DataTypes.DECIMAL(15,2),
-      defaultValue: 0.00,
+      type: DataTypes.STRING,
+      defaultValue: "0.00",
     },
     KYC_Status: {
       type: DataTypes.STRING,

@@ -25,8 +25,8 @@ const decryptDocumentProof = (encryptedDocumentProof) => {
     const decryptNationalityProof = decrypt(data.NationalityProof);
 
     return {
-      AadhaarProof: decryptAadhaarProof || null, // Decrypted Base64 string
-      Nationality: decryptNationalityProof || null, // Decrypted Base64 string
+      AadhaarProof: decryptAadhaarProof || "", // Decrypted Base64 string
+      Nationality: decryptNationalityProof || "", // Decrypted Base64 string
     };
   });
 };

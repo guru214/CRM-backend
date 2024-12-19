@@ -2,7 +2,7 @@ import WithdrawMode from "../models/WithdrawModeModel.js";
 import dotenv from "dotenv";
 import { encrypt, decrypt } from "../lib/encryptDecrypt.js";
 dotenv.config(); // Load environment variables
-
+import { connectDB, closeDB } from "../config/mongodb.js";
 // Function to encrypt withdraw modes data
 const encryptWithdrawData = (withdrawData) => {
   return {
@@ -38,6 +38,7 @@ const decryptWithdrawData = (encryptedData) => {
 // Submit Withdraw Details
 const submitWithdrawDetails = async (req, res) => {
   try {
+    await connectDB();
     const AccountID = req.user.AccountID;
     const {  withdrawData } = req.body;
 
@@ -56,12 +57,15 @@ const submitWithdrawDetails = async (req, res) => {
   } catch (error) {
     console.error("Error during withdraw submission:", error);
     return res.status(500).json({ message: "Internal server error" });
+  } finally {
+    await closeDB();
   }
 };
 
 // Update Withdraw Details
 const updateWithdrawDetails = async (req, res) => {
   try {
+    await connectDB();
     const AccountID = req.user.AccountID;
     const { withdrawData } = req.body;
 
@@ -83,12 +87,15 @@ const updateWithdrawDetails = async (req, res) => {
   } catch (error) {
     console.error("Error during withdraw update:", error);
     return res.status(500).json({ message: "Internal server error" });
+  } finally {
+    await closeDB();
   }
 };
 
 // Get Withdraw Details
 const getWithdrawDetails = async (req, res) => {
   try {
+    await connectDB();
     const AccountID = req.user.AccountID;
 
     // Find withdraw details by AccountID
@@ -108,6 +115,8 @@ const getWithdrawDetails = async (req, res) => {
   } catch (error) {
     console.error("Error fetching withdraw details:", error);
     return res.status(500).json({ message: "Internal server error" });
+  } finally {
+    await closeDB();
   }
 };
 

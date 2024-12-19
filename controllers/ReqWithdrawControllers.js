@@ -2,12 +2,13 @@ import User from "../models/User.js";
 import withdrawRequest from "../models/withdrawRequestModel.js";
 import dotenv from "dotenv";
 import { encrypt, decrypt } from "../lib/encryptDecrypt.js";
+import { connectDB, closeDB } from "../config/mongodb.js";
 dotenv.config(); // Load environment variables
 
 
 const encryptWithdrawReq = (withdrawData) => {
   return {
-    withdraw_mode: encrypt(withdrawData.withdraw_mode) || null,
+    withdraw_mode: withdrawData.withdraw_mode || null,
     amount: withdrawData.amount || null,
   };
 };
@@ -22,20 +23,20 @@ const decryptWithdrawReq = (encryptedWithdrawData) => {
 // Submit a new withdrawal request
 const submitWithdrawRequest = async (req, res) => {
   try {
+    await connectDB();
     const AccountID  = req.user.AccountID;
-    const { withdrawReq } = req.body;
-    console.log("req is:", withdrawReq)
+    const { withdrawData } = req.body;
+    console.log("req is:", withdrawData)
 
     // Check if required fields are provided
-    if (!withdrawReq) {
+    if (!withdrawData) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-    const encryptedWithdrawReq = encryptWithdrawReq(withdrawReq);
+    const encryptedWithdrawData = encryptWithdrawReq(withdrawData);
 
     // Fetch the user's balance
     const user = await User.findOne({
-      where: { AccountID: AccountID },
-      attributes: ['amount'] 
+      where: { AccountID: AccountID }
     });
 
     console.log("user balance", user)
@@ -43,28 +44,35 @@ const submitWithdrawRequest = async (req, res) => {
       return res.status(404).json({ message: "Account not found" });
     }
 
-    const currentBalance = user.amount; 
+    const currentBalance = parseFloat(decrypt(user.amount)); 
     console.log(currentBalance);
-    console.log(withdrawReq.amount);
-    if (currentBalance < withdrawReq.amount) {
+    console.log(withdrawData.amount);
+    if (currentBalance < withdrawData.amount) {
       return res.status(400).json({ message: "Insufficient balance" });
     }
+    const userBalance = currentBalance - withdrawData.amount;
+    console.log(userBalance)
+    user.amount = encrypt(userBalance.toString());
 
+    await user.save();
     // Create the withdrawal request
-    const submitWithdrawReq = await withdrawRequest.create({
+    const submitWithdrawData = await withdrawRequest.create({
       AccountID,
-      ...encryptedWithdrawReq
+      ...encryptedWithdrawData
     });
-    return res.status(201).json({ message: "Withdrawal request submitted successfully", submitWithdrawReq });
+    return res.status(201).json({ message: "Withdrawal request submitted successfully", submitWithdrawData });
   } catch (err) {
     console.error("Error during withdrawal request submission:", err);
     return res.status(500).json({ message: "Internal server error" });
+  } finally {
+    await closeDB();
   }
 };
 
   // Fetch withdrawal requests by AccountID
   const getWithdrawRequests = async (req, res) => {
     try {
+      await connectDB();
       const AccountID = req.user.AccountID;
 
       if (!AccountID) {
@@ -84,12 +92,15 @@ const submitWithdrawRequest = async (req, res) => {
     } catch (error) {
       console.error("Error fetching withdrawal requests:", error);
       return res.status(500).json({ message: "Internal server error" });
+    } finally {
+      await closeDB();
     }
   };
 
   // cancel a withdrawal request by ID
   const cancelWithdrawRequest = async (req, res) => {
     try {
+      connectDB();
       const { id } = req.params;
 
       if (!id) {
@@ -106,6 +117,8 @@ const submitWithdrawRequest = async (req, res) => {
     } catch (error) {
       console.error("Error deleting withdrawal request:", error);
       return res.status(500).json({ message: "Internal server error" });
+    } finally {
+      await closeDB();
     }
   };
 
