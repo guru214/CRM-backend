@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 
 // Withdraw Mode Schema
 const WithdrawModeSchema = new Schema({
-    AccountID: { type: String, required: true, ref: 'User' },
+    AccountID: { type: String, required: true, unique: true, ref: 'User' },
     account_holder_name: { type: String },
     account_number: { type: String },
     ifsc_code: { type: String },

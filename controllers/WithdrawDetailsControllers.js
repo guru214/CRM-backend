@@ -6,16 +6,16 @@ import { connectDB, closeDB } from "../config/mongodb.js";
 // Function to encrypt withdraw modes data
 const encryptWithdrawData = (withdrawData) => {
   return {
-    account_holder_name: encrypt(withdrawData.account_holder_name)|| null,
-    account_number: encrypt(withdrawData.account_number) || null,
-    ifsc_code: encrypt(withdrawData.ifsc_code) || null,
-    bic_swift_code: encrypt(withdrawData.bic_swift_code) || null,
-    branch: encrypt(withdrawData.branch) || null,
-    bank_account_currency: encrypt(withdrawData.bank_account_currency) || null,
-    upi_address: encrypt(withdrawData.upi_address) || null,
-    btc_withdraw_address: encrypt(withdrawData.btc_withdraw_address) || null,
-    eth_withdraw_address: encrypt(withdrawData.eth_withdraw_address) || null,
-    netteller_address: encrypt(withdrawData.netteller_address) || null,
+    account_holder_name: withdrawData.account_holder_name?  encrypt(withdrawData.account_holder_name): null,
+    account_number: withdrawData.account_number? encrypt(withdrawData.account_number) : null,
+    ifsc_code: withdrawData.ifsc_code? encrypt(withdrawData.ifsc_code) : null,
+    bic_swift_code: withdrawData.bic_swift_code? encrypt(withdrawData.bic_swift_code) : null,
+    branch: withdrawData.branch? encrypt(withdrawData.branch) : null,
+    bank_account_currency: withdrawData.bank_account_currency? encrypt(withdrawData.bank_account_currency) : null,
+    upi_address: withdrawData.upi_address? encrypt(withdrawData.upi_address) : null,
+    btc_withdraw_address: withdrawData.btc_withdraw_address? encrypt(withdrawData.btc_withdraw_address) : null,
+    eth_withdraw_address: withdrawData.eth_withdraw_address? encrypt(withdrawData.eth_withdraw_address) : null,
+    netteller_address: withdrawData.netteller_address? encrypt(withdrawData.netteller_address) : null,
   };
 };
 
@@ -41,10 +41,11 @@ const submitWithdrawDetails = async (req, res) => {
     await connectDB();
     const AccountID = req.user.AccountID;
     const {  withdrawData } = req.body;
+    console.log(withdrawData)
+    console.log(AccountID)
 
     // Encrypt withdraw data
     const encryptedWithdrawData = encryptWithdrawData(withdrawData);
-
     // Create and save new withdraw mode record
     const newWithdrawMode = new WithdrawMode({
       AccountID,
