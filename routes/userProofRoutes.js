@@ -1,5 +1,5 @@
 import express from 'express';
-import { submitUserProof, listUserProofs } from '../controllers/userProof.js';
+import { submitUserProof, listUserProofs } from '../controllers/userControllers/userDocControllers.js';
 import verifyToken from '../middleware/verifyToken.js'; 
 
 const router = express.Router();

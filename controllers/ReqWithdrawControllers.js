@@ -1,7 +1,7 @@
 import User from "../models/User.js";
 import withdrawRequest from "../models/withdrawRequestModel.js";
 import dotenv from "dotenv";
-import { encrypt, decrypt } from "../lib/encryptDecrypt.js";
+import { encrypt, decrypt } from "../lib/EncryptDecrypt/encryptDecrypt.js";
 import { connectDB, closeDB } from "../config/mongodb.js";
 dotenv.config(); // Load environment variables
 

@@ -1,35 +1,6 @@
-import { connectDB, closeDB } from "../config/mongodb.js";
-import userProof from "../models/userProof.js";
-import { encrypt, decrypt } from "../lib/encryptDecrypt.js";
-import fs from "fs";
-
-// Helper function to encrypt deposit request data
-const encryptDocumentProof = (documentProof) => {
-
-  const AadhaarProof = fs.readFileSync(documentProof.AadhaarProof); // Read image file as buffer
-  const AadhaarBase64 = AadhaarProof.toString("base64"); // Convert image to Base64 string
-
-  const NationalityProof = fs.readFileSync(documentProof.NationalityProof);
-  const NationalityBase64 = NationalityProof.toString("base64");
-
-  return {
-    AadhaarProof: AadhaarBase64 ? encrypt(AadhaarBase64) : "", // Encrypt the Base64 string 
-    NationalityProof: NationalityBase64 ? encrypt(NationalityBase64) : "", // Encrypt the Base64 string
-  };
-};
-
-// Helper function to decrypt deposit request data
-const decryptDocumentProof = (encryptedDocumentProof) => {
-  return encryptedDocumentProof.map((data) => {
-    const decryptAadhaarProof = decrypt(data.AadhaarProof);
-    const decryptNationalityProof = decrypt(data.NationalityProof);
-
-    return {
-      AadhaarProof: decryptAadhaarProof || "", // Decrypted Base64 string
-      Nationality: decryptNationalityProof || "", // Decrypted Base64 string
-    };
-  });
-};
+import { connectDB, closeDB } from "../../config/mongodb.js";
+import userProof from "../../models/userProof.js";
+import { encryptDocumentProof, decryptDocumentProof } from "../../lib/EncryptDecrypt/documentProof.js";
 
 // Submit a new deposit request
 const submitUserProof = async (req, res) => {

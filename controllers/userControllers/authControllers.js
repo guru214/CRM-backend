@@ -1,0 +1,188 @@
+
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+import { encrypt} from "../../lib/EncryptDecrypt/encryptDecrypt.js";
+import { generateAccountID, generateReferralID } from "../../lib/uidGeneration.js";
+import { RESPONSE_MESSAGES } from "../../lib/constants.js";
+import { encryptPassword, generateRandomString } from "../../lib/EncryptDecrypt/passwordEncryptDecrypt.js"
+import User from "../../models/User.js";
+import crypto from 'crypto';
+import { openConnection, closeConnection } from "../../config/sqlconnection.js";
+
+dotenv.config(); // Load environment variables
+
+// Function to generate tokens
+const generateTokens = (userId, AccountID, Role) => {
+  const accessToken = jwt.sign({ userId, AccountID, Role }, process.env.JWT_SECRET, { expiresIn: "60m" });
+  const refreshToken = jwt.sign({ userId, AccountID, Role }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
+  return { accessToken, refreshToken };
+};
+
+// Function to encrypt user data
+const encryptUserData = (userData) => {
+  return {
+    FullName: userData.FullName ? encrypt(userData.FullName) : null,
+    Email: userData.Email ? userData.Email : null, //for some reason
+    Phone: userData.Phone ? encrypt(userData.Phone) : null,
+    Account_Type: userData.Account_Type ? encrypt(userData.Account_Type) : null,
+    Address: userData.Address ? encrypt(userData.Address) : null,
+  };
+};
+
+// Register function
+const Register = async (req, res) => {
+  try {
+    await openConnection();
+    const { FullName, Email, Password, Phone, Account_Type, Address } = req.body;
+    // Check if the user already exists in the database
+    const existingUser = await User.findOne({ where: { Email } });
+    if (existingUser) {
+      return res.status(400).json({ message: RESPONSE_MESSAGES.ALREADY_EXIST.message });
+    }
+    // Encrypt user data
+    const encryptedUserData = encryptUserData({ FullName, Email, Phone, Account_Type, Address });
+    const randomStringOne = generateRandomString(5);
+    const randomStringTwo = generateRandomString(10);
+    const iv = crypto.randomBytes(12).toString('hex');
+    // console.log(iv);
+    const securedIv = randomStringOne + iv + randomStringTwo;
+    // console.log(securedIv);
+    const encryptedPassword = encryptPassword(Password, iv)
+    // console.log("encrypted password", encryptedPassword);
+    // Generate unique AccountID and ReferralID
+    const AccountID = generateAccountID();
+    const ReferralID = generateReferralID(FullName);
+    // const Roles = ['user', 'admin', 'superadmin'];
+    const Role = 'User';
+    const KYC_Status = 'Pending';
+    const amount = "0.00";
+    const encryptedAmount = encrypt(amount);
+    const newUser = await User.create({
+      FullName: encryptedUserData.FullName,
+      Email: Email, 
+      Password: encryptedPassword,
+      Phone: encryptedUserData.Phone,
+      Account_Type: encryptedUserData.Account_Type,
+      Address: encryptedUserData.Address,
+      documentType: encryptedUserData.documentType,
+      documentNumber: encryptedUserData.documentNumber,
+      KYC_Status: KYC_Status,
+      amount: encryptedAmount,
+      AccountID: AccountID,
+      ReferralID: ReferralID,
+      Role: Role,
+      iv: securedIv,
+    });
+    if (newUser) {
+      res.status(201).json({ message: "User registered successfully", AccountID, ReferralID });
+    } else {
+      res.status(500).json({ message: "Failed to register user" });
+    }
+  } catch (error) {
+    // console.error("Error during user registration:", error);
+    res.status(500).json({ message: "Internal server error" });
+  } finally {
+    await closeConnection();
+  }
+};
+
+// Login function
+const Login = async (req, res) => {
+  try {
+    await openConnection();
+    const { Email, Password } = req.body;
+    // Check if email and password are provided
+    if (!Email || !Password) {
+      return res.status(400).json({ message: RESPONSE_MESSAGES.BAD_REQUEST.message });
+    }
+    // Find the user by email using Sequelize
+    const Finduser = await User.findOne({ where: { Email } });
+    if (!Finduser) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+    const realIv = Finduser.iv.substring(5, 29); // Extract the IV from stored data
+    const encryptedPass = encryptPassword(Password, realIv);
+    const storedPassword = Finduser.Password;
+    // console.log(encryptedPass)
+    // console.log(storedPassword)
+    // console.log("sdf",Finduser.Password)
+    if (encryptedPass !== storedPassword) {
+      return res.status(401).json({ message: RESPONSE_MESSAGES.INVALID.message });
+    }
+    // Generate tokens
+    const { accessToken, refreshToken } = generateTokens(Finduser.id, Finduser.AccountID, Finduser.Role);
+    const Role = Finduser.Role
+    // Update the refresh token in the database
+    await User.update(
+      { refreshToken: refreshToken },
+      { where: { id: Finduser.id } }
+    );
+    // Set the access token as a cookie (HTTP-only cookie for security)
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production 
+      sameSite: 'Strict', // Prevent CSRF attacks      
+      maxAge: 60 * 60 * 1000, // 1 hour
+    });
+    // Optionally, set the refresh token as a cookie (HTTP-only cookie for security)
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production 
+      sameSite: 'Strict', // Prevent CSRF attacks      
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+    // Decrypt user data if necessary
+    // const decryptedUserData = decryptUserData(Finduser);
+    // console.log('d ::d',decryptedUserData);
+    return res.status(200).json({
+      message: "Login successful",
+      // user: decryptedUserData,
+      Role,
+      accessToken,
+      refreshToken,
+    });
+  } catch (error) {
+    // console.error("Error during user login:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  } finally {
+    await closeConnection();
+  }
+};
+
+
+// Logout Function
+const Logout = async (req, res) => {
+  try {
+    await openConnection();
+    const { refreshToken } = req.cookies;
+    // Check if the refresh token is provided
+    if (!refreshToken) {
+      return res.status(400).json({ message: "No token provided" });
+    }
+    // Verify the refresh token
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    if (!decoded) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+    // Find the user using the decoded user ID from the refresh token
+    const Finduser = await User.findOne({ where: { id: decoded.userId } });
+    if (!Finduser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    // Update the user's refresh token to NULL
+    await Finduser.update({ refreshToken: null });
+    // Clear cookies
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+
+    return res.status(200).json({ message: "Logout successful" });
+  } catch (error) {
+    // console.error("Error during logout:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  } finally {
+    await closeConnection();
+  }
+};
+
+export { Register, Login, Logout };
+

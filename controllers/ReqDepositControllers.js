@@ -1,6 +1,6 @@
 import { connectDB, closeDB } from "../config/mongodb.js";
 import DepositRequest from "../models/DepositRequest.js";
-import { encrypt, decrypt } from "../lib/encryptDecrypt.js";
+import { encrypt, decrypt } from "../lib/EncryptDecrypt/encryptDecrypt.js";
 import fs from "fs";
 import User from "../models/User.js";
 
@@ -57,6 +57,7 @@ const submitDepositRequest = async (req, res) => {
     if(!updateUserAmount){
       res.status(404).json({message: "user not found."});
     }
+    console.log(updateUserAmount)
     
     const existingUserAmount = parseFloat(decrypt(updateUserAmount.amount))
     const depositedUserAmount = parseFloat(depositData.amount);

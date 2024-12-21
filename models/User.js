@@ -48,11 +48,15 @@ User.init(
     },
     amount: {
       type: DataTypes.STRING,
-      defaultValue: "0.00",
+      allowNull: false,
+    },
+    Role: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     KYC_Status: {
       type: DataTypes.STRING,
-      defaultValue: "PENDING",
+      allowNull: false,
     },
     submissionDate: {
       type: DataTypes.DATE,
