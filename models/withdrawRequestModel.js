@@ -9,17 +9,15 @@ const withdrawRequestSchema = new Schema({
     },
     withdraw_mode : {
         type: String,
-        enum: ['BANK', 'UPI', 'BTC', 'ETH', 'NETELLER'],
         required: true
     },
     amount : {
-        type: Number,
+        type: String,
         required: true
     },
     status: {
         type: String,
-        enum: ['pending','success','failure'],
-        default: 'pending'
+        required: true,
     },
     requestedAt : {
         type: Date,

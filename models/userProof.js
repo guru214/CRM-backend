@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 
 //depositrequest Mode schema 
 const userProofSchema = new Schema({
-    AccountID: { type: String, required: true, ref: 'User' },
+    AccountID: { type: String, required: true, ref: 'User', unique: true },
     AadhaarProof: { type: String },
     NationalityProof: { type: String },
     uploadedAt: { type: Date, default: Date.now() },
