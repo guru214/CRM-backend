@@ -7,7 +7,7 @@ const depositRequestSchema = new Schema({
   deposit_mode: { type: String, required: true },
   amount: { type: String, required: true },
   image_proof: { type: String, required: true },
-  status: { type: String, enum: ['pending', 'success', 'failure'], default: "pending" },
+  status: { type: String, required: true },
   requestedAt : { type: Date, default: Date.now()},
   updatedAt : { type: Date, default: null }
 });
