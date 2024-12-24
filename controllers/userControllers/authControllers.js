@@ -1,7 +1,7 @@
 
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { encrypt} from "../../lib/EncryptDecrypt/encryptDecrypt.js";
+import { encrypt } from "../../lib/EncryptDecrypt/encryptDecrypt.js";
 import { generateAccountID, generateReferralID } from "../../lib/uidGeneration.js";
 import { RESPONSE_MESSAGES } from "../../lib/constants.js";
 import { encryptPassword, generateRandomString } from "../../lib/EncryptDecrypt/passwordEncryptDecrypt.js"
@@ -12,9 +12,9 @@ import { openConnection, closeConnection } from "../../config/sqlconnection.js";
 dotenv.config(); // Load environment variables
 
 // Function to generate tokens
-const generateTokens = (userId, AccountID, Role) => {
-  const accessToken = jwt.sign({ userId, AccountID, Role }, process.env.JWT_SECRET, { expiresIn: "60m" });
-  const refreshToken = jwt.sign({ userId, AccountID, Role }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
+const generateTokens = (userId, Email, AccountID, Role) => {
+  const accessToken = jwt.sign({ userId, Email, AccountID, Role }, process.env.JWT_SECRET, { expiresIn: "60m" });
+  const refreshToken = jwt.sign({ userId, Email, AccountID, Role }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
   return { accessToken, refreshToken };
 };
 
@@ -55,11 +55,12 @@ const Register = async (req, res) => {
     // const Roles = ['user', 'admin', 'superadmin'];
     const Role = 'User';
     const KYC_Status = 'Pending';
+    const isEmailVerified = 'No';
     const amount = "0.00";
     const encryptedAmount = encrypt(amount);
     const newUser = await User.create({
       FullName: encryptedUserData.FullName,
-      Email: Email, 
+      Email: Email,
       Password: encryptedPassword,
       Phone: encryptedUserData.Phone,
       Account_Type: encryptedUserData.Account_Type,
@@ -71,6 +72,7 @@ const Register = async (req, res) => {
       AccountID: AccountID,
       ReferralID: ReferralID,
       Role: Role,
+      isEmailVerified: isEmailVerified,
       iv: securedIv,
     });
     if (newUser) {
@@ -100,6 +102,7 @@ const Login = async (req, res) => {
     if (!Finduser) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
+
     const realIv = Finduser.iv.substring(5, 29); // Extract the IV from stored data
     const encryptedPass = encryptPassword(Password, realIv);
     const storedPassword = Finduser.Password;
@@ -110,7 +113,7 @@ const Login = async (req, res) => {
       return res.status(401).json({ message: RESPONSE_MESSAGES.INVALID.message });
     }
     // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(Finduser.id, Finduser.AccountID, Finduser.Role);
+    const { accessToken, refreshToken } = generateTokens(Finduser.id, Finduser.Email, Finduser.AccountID, Finduser.Role );
     const Role = Finduser.Role
     // Update the refresh token in the database
     await User.update(
@@ -142,13 +145,44 @@ const Login = async (req, res) => {
       refreshToken,
     });
   } catch (error) {
-    // console.error("Error during user login:", error);
+    console.error("Error during user login:", error);
     return res.status(500).json({ message: "Internal server error" });
   } finally {
     await closeConnection();
   }
 };
 
+const verifyEmail = async (req, res, next) => {
+  try {
+    await openConnection();
+    const { token } = req.params;
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    console.log("Decoded token:", decoded);
+
+    const verifyUser = await User.findOne({ where: { Email: decoded.Email } });
+
+    // const updateIsEmailVerified = verifyUser.isEmailVerified;
+    const isEmailVerified = "Yes";
+    // const emailVerified =
+    await verifyUser.update({ isEmailVerified: isEmailVerified })
+    // await emailVerified.save();
+    res.status(200).json({ message: "Your Email has been verified successfully." });
+  }
+  catch (error) {
+    console.error("error in verifying email:", error)
+    // Handle JWT errors
+    if (error.name === "TokenExpiredError") {
+      return res.status(400).json({ message: "Email verification token expired." });
+    } else if (error.name === "JsonWebTokenError") {
+      return res.status(400).json({ message: "Invalid token." });
+    }
+    next(error);
+  }
+  finally {
+    await closeConnection();
+  }
+};
 
 // Logout Function
 const Logout = async (req, res) => {
@@ -184,5 +218,5 @@ const Logout = async (req, res) => {
   }
 };
 
-export { Register, Login, Logout };
+export { Register, Login, verifyEmail, Logout };
 

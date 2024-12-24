@@ -12,7 +12,6 @@ import Refresh from './routes/refreshTokenRoute.js';
 import cors from 'cors';
 import { openSequelizeConnection, closeSequelizeConnection} from './config/sqldb.js'
 const app = express();
-
 dotenv.config();
 const PORT =  4040;
 
