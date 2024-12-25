@@ -3,7 +3,8 @@ import jwt from "jsonwebtoken";
 const verifyToken = (req, res, next) => {
   try {
     console.log(req.cookies);
-    const token = req.cookies?.accessToken || req.headers.authorization?.split(" ")[1];
+    const token = req.cookies?.accessToken ;
+    // || req.headers.authorization?.split(" ")[1];
 
     if (!token) {
       return res.status(401).json({ message: "Access token is required" });

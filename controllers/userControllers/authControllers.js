@@ -113,7 +113,7 @@ const Login = async (req, res) => {
       return res.status(401).json({ message: RESPONSE_MESSAGES.INVALID.message });
     }
     // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(Finduser.id, Finduser.Email, Finduser.AccountID, Finduser.Role );
+    const { accessToken, refreshToken } = generateTokens(Finduser.id, Finduser.Email, Finduser.AccountID, Finduser.Role);
     const Role = Finduser.Role
     // Update the refresh token in the database
     await User.update(
@@ -123,17 +123,31 @@ const Login = async (req, res) => {
     // Set the access token as a cookie (HTTP-only cookie for security)
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
+
+      //should be ued in production level
       secure: process.env.NODE_ENV === 'production', // Use secure cookies in production 
-      sameSite: 'Strict', // Prevent CSRF attacks      
+      sameSite: 'Strict', // Prevent CSRF attacks  
+      //should be ued in local
+      // secure: false,       // Set to true if using HTTPS
+      // sameSite: 'None',    // Allows cross-origin cookies
       maxAge: 60 * 60 * 1000, // 1 hour
     });
     // Optionally, set the refresh token as a cookie (HTTP-only cookie for security)
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
+      //should be ued in production level
       secure: process.env.NODE_ENV === 'production', // Use secure cookies in production 
-      sameSite: 'Strict', // Prevent CSRF attacks      
+      sameSite: 'Strict', // Prevent CSRF attacks    
+      //should be ued in local
+      // secure: false,       // Set to true if using HTTPS
+      // sameSite: 'None',    // Allows cross-origin cookies
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
+
+    // res.cookie('token', token, {
+    //   httpOnly: true,      // Prevents access via JavaScript
+    //   secure: false,       // Set to true if using HTTPS
+    //   sameSite: 'None',    // Allows cross-origin cookies
     // Decrypt user data if necessary
     // const decryptedUserData = decryptUserData(Finduser);
     // console.log('d ::d',decryptedUserData);
