@@ -1,5 +1,10 @@
 import express from "express";
-import { submitWithdrawDetails, updateWithdrawDetails, getWithdrawDetails } from "../controllers/WithdrawDetailsControllers.js"; // Assuming controller is in 'controllers' folder
+import 
+{ 
+    submitWithdrawDetails,
+    updateWithdrawDetails, 
+    getWithdrawDetails 
+} from "../controllers/withdrawControllers/WithdrawDetailsControllers.js"; // Assuming controller is in 'controllers' folder
 import verifyToken from "../middleware/verifyToken.js";
 import isEmailVerified from '../middleware/isEmailVerified.js';
 

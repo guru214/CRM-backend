@@ -1,8 +1,9 @@
-import { connectDB, closeDB } from "../config/mongodb.js";
-import DepositRequest from "../models/DepositRequest.js";
-import { encrypt, decrypt } from "../lib/EncryptDecrypt/encryptDecrypt.js";
+import { connectDB, closeDB } from "../../config/mongodb.js";
+import DepositRequest from "../../models/DepositRequest.js";
+import { encrypt, decrypt } from "../../lib/EncryptDecrypt/encryptDecrypt.js";
 import fs from "fs";
-import User from "../models/User.js";
+import User from "../../models/User.js";
+import { RESPONSE_MESSAGES } from "../../lib/constants.js";
 
 // Helper function to encrypt deposit request data
 const encryptDepositReq = (depositData) => {
@@ -41,12 +42,12 @@ const submitDepositRequest = async (req, res) => {
     const { deposit_mode, amount, image_proof } = req.body;
     const status = "Pending";
     // Validate request body
-    if (!AccountID || !deposit_mode || !amount || !image_proof) {
+    if ( !deposit_mode || !amount || !image_proof) {
       return res.status(400).json({ message: "Missing required fields." });
     }
 
     // Validate deposit mode
-    const validDepositModes = ['Bank', 'UPI', 'BTC', 'Netteller', 'ETH'];
+    const validDepositModes = ["Bank", "UPI", "BTC", "Netteller", "ETH"];
     if (!validDepositModes.includes(deposit_mode)) {
       return res.status(400).json({ message: "Invalid deposit mode." });
     }
@@ -64,23 +65,7 @@ const submitDepositRequest = async (req, res) => {
       ...encryptedDepositReqData,
     });
 
-    // // Find user and update the amount
-    const updateUserAmount = await User.findOne({ where: { AccountID: AccountID } });
-    if (!updateUserAmount) {
-      return res.status(404).json({ message: "User not found." });
-    }
-
-    // Decrypt the user's existing amount, update it, and encrypt the new amount
-    const existingUserAmount = parseFloat(decrypt(updateUserAmount.amount));
-    // console.log(existingUserAmount)
-    const depositedUserAmount = parseFloat(amount); // Corrected to use amount directly from request body
-    // console.log(depositedUserAmount)
-    const updatedAmount = existingUserAmount + depositedUserAmount;
-    // console.log(updatedAmount)
-    updateUserAmount.amount = encrypt(updatedAmount.toString());
-
-    // Save the updated user amount and the new deposit request
-    await updateUserAmount.save();
+    // console.log("submitted amount is",parseFloat(decrypt(encryptedDepositReqData.amount)));
     await newDepositRequest.save();
 
     return res.status(201).json({ message: "Deposit request submitted successfully!" });
@@ -106,6 +91,7 @@ const listDepositRequests = async (req, res) => {
 
     const depositData = await DepositRequest.find({ AccountID });
 
+    // console.log("id is:",depositData[0].id);
     if (!depositData || depositData.length === 0) {
       return res.status(404).json({ message: "No deposit requests found." });
     }

@@ -3,9 +3,11 @@ import {
   submitWithdrawRequest,
   getWithdrawRequests,
   cancelWithdrawRequest,
-} from "../controllers/ReqWithdrawControllers.js";
+} from "../controllers/withdrawControllers/ReqWithdrawControllers.js";
 import verifyToken from "../middleware/verifyToken.js";
 import isEmailVerified from '../middleware/isEmailVerified.js';
+import { ChangeWithdrawStatus } from "../controllers/withdrawControllers/withdrawManagement.js";
+import authorizeRoles from "../middleware/authorization.js";
 
 const router = express.Router();
 
@@ -17,5 +19,9 @@ router.get("/",verifyToken, isEmailVerified, getWithdrawRequests);
 
 // Route to delete a withdrawal request by ID
 router.delete("/:id",verifyToken, isEmailVerified, cancelWithdrawRequest);
+
+//Route to change the status of a withdrawal
+router.patch('/changeStatus',verifyToken, isEmailVerified, authorizeRoles(['superAdmin']), ChangeWithdrawStatus);
+
 
 export default router;

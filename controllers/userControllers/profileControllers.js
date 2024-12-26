@@ -4,6 +4,7 @@ import User from "../../models/User.js";
 import { openConnection, closeConnection } from "../../config/sqlconnection.js";
 import { decrypt } from "../../lib/EncryptDecrypt/encryptDecrypt.js";
 dotenv.config(); // Load environment variables
+import { RESPONSE_MESSAGES } from "../../lib/constants.js";
 
 // Profile function
 const Profile = async (req, res) => {

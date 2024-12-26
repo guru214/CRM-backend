@@ -1,6 +1,7 @@
 import { connectDB, closeDB } from "../../config/mongodb.js";
 import userProof from "../../models/userProof.js";
 import { encryptDocumentProof, decryptDocumentProof } from "../../lib/EncryptDecrypt/documentProof.js";
+import { RESPONSE_MESSAGES } from "../../lib/constants.js";
 
 // Submit a new deposit request
 const submitUserProof = async (req, res) => {
