@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { RESPONSE_MESSAGES } from "../../lib/constants.js";
-import { encryptPassword, generateRandomString } from "../../lib/EncryptDecrypt/passwordEncryptDecrypt.js"
+import { encryptPassword, generateRandomString } from "../../lib/EncryptDecrypt/passwordEncryptDecrypt.js";
 import nodemailer from 'nodemailer';
 import User from "../../models/User.js";
 import crypto from 'crypto';

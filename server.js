@@ -13,7 +13,7 @@ import cors from 'cors';
 import { openSequelizeConnection, closeSequelizeConnection} from './config/sqldb.js'
 const app = express();
 dotenv.config();
-const PORT =  4040;
+const PORT =  process.env.PORT || 4040;
 
 // Middlewares
 app.use(cookieParser());
@@ -37,6 +37,9 @@ app.use('/api/v1/withdraw', ReqWithdraw);
 app.use('/api/v1/deposit', ReqDeposit);
 app.use('/api/v1/userProof', UserProof);
 
+app.get('/', (req,res)=>{
+   res.json("This is the basic api")
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -50,6 +53,6 @@ sequelize.authenticate().then(()=>{
 })
    
 // Listen to the server after DB connection
-app.listen(PORT,'0.0.0.0', () => {
+app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

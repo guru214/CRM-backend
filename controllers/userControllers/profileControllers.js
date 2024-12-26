@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import { encryptUserData, decryptUserData } from "../../lib/EncryptDecrypt/UserData.js";
 import User from "../../models/User.js";
 import { openConnection, closeConnection } from "../../config/sqlconnection.js";
+import { decrypt } from "../../lib/EncryptDecrypt/encryptDecrypt.js";
 dotenv.config(); // Load environment variables
 
 // Profile function
@@ -21,25 +22,19 @@ const Profile = async (req, res) => {
         "Address",
         "AccountID",
         "ReferralID",
+        "amount",
+
       ],
     });
-    // console.log(user)
 
     // Check if a user was found
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
-    // console.log("Encrypted user details:", user);
-
     // Decrypt user data
     const decryptedUserData = decryptUserData(user);
     decryptedUserData.AccountID = user.AccountID; // Ensure IDs remain unchanged
     decryptedUserData.ReferralID = user.ReferralID;
-
-    // console.log("Decrypted user details:", decryptedUserData);
-
-    // Return the decrypted user data
     return res.json(decryptedUserData);
   } catch (error) {
     console.error("Error fetching user profile:", error);
@@ -56,6 +51,9 @@ const UpdateProfile = async (req, res) => {
     const id = req.user.userId; // Ensure this comes from JWT middleware
     const updates = encryptUserData(req.body); // Encrypt incoming data
 
+    if(updates.Email || updates.Phone){
+      return res.status(400).json({message: "You are not allowed to update these fields."})
+    }
     // console.log('Updating user with ID:', id);
     // console.log('Updates:', updates);
     // Dynamically construct the update object

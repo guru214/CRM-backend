@@ -8,14 +8,14 @@ const submitUserProof = async (req, res) => {
     await connectDB();
 
     const AccountID = req.user.AccountID;
-    const { documentProof } = req.body;
+    const { AadhaarProof, NationalityProof } = req.body;
 
 
-    if (!AccountID || !documentProof) {
+    if (!AccountID || !AadhaarProof || !NationalityProof) {
       return res.status(400).json({ message: "AccountID and deposit data are required." });
     }
 
-    const encryptedDocumentProof = encryptDocumentProof(documentProof);
+    const encryptedDocumentProof = encryptDocumentProof({ AadhaarProof, NationalityProof});
 
     // Create a new deposit request
     const newUserProof = new userProof({

@@ -44,6 +44,12 @@ const submitWithdrawDetails = async (req, res) => {
     console.log(withdrawData)
     console.log(AccountID)
 
+    const findUser = await WithdrawMode.findOne({AccountID});
+    if(findUser){
+      console.log(findUser)
+
+      return res.status(400).json({message:"Withdraw details already exist."})
+    }
     // Encrypt withdraw data
     const encryptedWithdrawData = encryptWithdrawData(withdrawData);
     // Create and save new withdraw mode record
@@ -110,8 +116,7 @@ const getWithdrawDetails = async (req, res) => {
     const decryptedWithdrawData = decryptWithdrawData(withdrawData.toObject());
 
     return res.status(200).json({
-      message: "Withdraw details fetched successfully",
-      data: decryptedWithdrawData,
+      message: "Withdraw details fetched successfully", decryptedWithdrawData,
     });
   } catch (error) {
     console.error("Error fetching withdraw details:", error);

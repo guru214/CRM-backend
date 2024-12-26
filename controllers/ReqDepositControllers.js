@@ -65,22 +65,22 @@ const submitDepositRequest = async (req, res) => {
     });
 
     // // Find user and update the amount
-    // const updateUserAmount = await User.findOne({ where: { AccountID: AccountID } });
-    // if (!updateUserAmount) {
-    //   return res.status(404).json({ message: "User not found." });
-    // }
+    const updateUserAmount = await User.findOne({ where: { AccountID: AccountID } });
+    if (!updateUserAmount) {
+      return res.status(404).json({ message: "User not found." });
+    }
 
-    // // Decrypt the user's existing amount, update it, and encrypt the new amount
-    // const existingUserAmount = parseFloat(decrypt(updateUserAmount.amount));
-    // // console.log(existingUserAmount)
-    // const depositedUserAmount = parseFloat(amount); // Corrected to use amount directly from request body
-    // // console.log(depositedUserAmount)
-    // const updatedAmount = existingUserAmount + depositedUserAmount;
-    // // console.log(updatedAmount)
-    // updateUserAmount.amount = encrypt(updatedAmount.toString());
+    // Decrypt the user's existing amount, update it, and encrypt the new amount
+    const existingUserAmount = parseFloat(decrypt(updateUserAmount.amount));
+    // console.log(existingUserAmount)
+    const depositedUserAmount = parseFloat(amount); // Corrected to use amount directly from request body
+    // console.log(depositedUserAmount)
+    const updatedAmount = existingUserAmount + depositedUserAmount;
+    // console.log(updatedAmount)
+    updateUserAmount.amount = encrypt(updatedAmount.toString());
 
-    // // Save the updated user amount and the new deposit request
-    // await updateUserAmount.save();
+    // Save the updated user amount and the new deposit request
+    await updateUserAmount.save();
     await newDepositRequest.save();
 
     return res.status(201).json({ message: "Deposit request submitted successfully!" });
