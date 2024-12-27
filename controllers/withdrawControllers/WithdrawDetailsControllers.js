@@ -76,15 +76,20 @@ const updateWithdrawDetails = async (req, res) => {
   try {
     await connectDB();
     const AccountID = req.user.AccountID;
-    const { withdrawData } = req.body;
+    const updates = encryptWithdrawData(req.body); // Encrypt incoming data
+
+    const updateFields = {};
+    for (const key in updates) {
+      if (updates[key] !== null) {
+        updateFields[key] = updates[key];
+      }
+    }
 
     // Encrypt the updated withdraw data
-    const encryptedWithdrawData = encryptWithdrawData(withdrawData);
-
-    // Find and update the withdraw details
+    // Find and update the withdraw details using $set operator
     const updatedWithdrawMode = await WithdrawMode.findOneAndUpdate(
       { AccountID },
-      { ...encryptedWithdrawData },
+      { $set: updateFields },
       { new: true } // Return the updated document
     );
 
@@ -92,7 +97,7 @@ const updateWithdrawDetails = async (req, res) => {
       return res.status(404).json({ message: "Withdraw details not found for this AccountID" });
     }
 
-    return res.status(200).json({ message: "Withdraw details updated successfully" });
+    return res.status(200).json({ message: "Withdraw details updated successfully", updatedWithdrawMode });
   } catch (error) {
     console.error("Error during withdraw update:", error);
     return res.status(500).json({ message: "Internal server error" });
@@ -100,6 +105,7 @@ const updateWithdrawDetails = async (req, res) => {
     await closeDB();
   }
 };
+
 
 // Get Withdraw Details
 const getWithdrawDetails = async (req, res) => {

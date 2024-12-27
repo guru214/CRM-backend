@@ -33,7 +33,7 @@ router.put("/changepassword",verifyToken, ChangePassword);
 router.post('/forgetpassword', ForgetPassword);
 
 //reset password
-router.post('/resetpassword/:token', verifyToken, ResetPassword);
+router.post('/resetpassword/:token', ResetPassword);
 
 //get all users
 router.get('/getUsers', verifyToken, isEmailVerified, authorizeRoles(['superAdmin', 'Admin']), GetUsers)

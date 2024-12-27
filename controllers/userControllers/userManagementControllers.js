@@ -4,7 +4,7 @@ import { encryptUserData, decryptUserData } from "../../lib/EncryptDecrypt/UserD
 import User from "../../models/User.js";
 import { openConnection, closeConnection } from "../../config/sqlconnection.js";
 import { RESPONSE_MESSAGES } from "../../lib/constants.js";
-
+// import { encryptPassword } from "../../lib/EncryptDecrypt/passwordEncryptDecrypt.js";
 dotenv.config(); // Load environment variables
 
 const GetUsers = async (req, res) => {
@@ -93,15 +93,34 @@ const KYCUpdate = async (req, res) => {
 const DeleteUser = async(req, res) => {
   try{
     await openConnection();
+    // const Email = req.user.Email;
+    // const {AccountID, Password} = req.body;
     const {AccountID} = req.body;
     console.log(AccountID)
     const findUser = await User.findOne({where:{AccountID: AccountID}})
     if(!findUser){
       res.status(404).json({message: "User not found."})
     };
+
+     ///lets seeee
+    // const superAdmin = await User.findOne({where:{Email: Email}})
+    // if(!superAdmin){
+    //   res.status(404).json({message: "you dont have access for this request."})
+    // };
+    // const realIv = superAdmin.iv.substring(5, 29); // Extract the IV from stored data
+    // const encryptedPass = encryptPassword(Password, realIv);
+    // const storedPassword = superAdmin.Password;
+    // // console.log(encryptedPass)
+    // // console.log(storedPassword)
+    // // console.log("sdf",Finduser.Password)
+    // if (encryptedPass !== storedPassword) {
+    //   return res.status(401).json({ message: RESPONSE_MESSAGES.INVALID.message });
+    // }
+
     await findUser.destroy();
     res.status(201).json({message: "User Deleted Successfully."});
   } catch(error){
+    console.log(error)
     res.status(500).json({message:"Internal server error."});
   } finally{
     await closeConnection();

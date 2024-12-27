@@ -113,8 +113,6 @@ const ChangePassword = async (req, res) => {
     try {
       await openConnection();
       const { token } = req.params;
-      // const id = req.user.userId; // Extract user ID from the authenticated request
-      console.log(id)
       const { newPassword } = req.body;
   
       // Validate input
@@ -127,7 +125,7 @@ const ChangePassword = async (req, res) => {
       console.log("Decoded Token:", decoded);
   
       // Find the user by ID
-      const user = await User.findOne({ where: { id: decoded.userId } });
+      const user = await User.findOne({ where: { id: decoded.id } });
       console.log("users", user)
       if (!user) {
         return res.status(404).json({ message: "User not found" });

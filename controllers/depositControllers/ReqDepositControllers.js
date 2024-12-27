@@ -18,7 +18,7 @@ const encryptDepositReq = (depositData) => {
     deposit_mode: depositData.deposit_mode ? encrypt(depositData.deposit_mode) : null,
     amount: depositData.amount ? encrypt(depositData.amount.toString()) : null, // Ensure amount is saved as a string
     image_proof: imageBase64 ? encrypt(imageBase64) : null, // Encrypt the Base64 string
-    status: depositData.status ? encrypt(depositData.status) : null,
+    status: depositData.status ? depositData.status : null,
   };
 };
 
@@ -29,7 +29,7 @@ const decryptDepositReq = (encryptedDepositData) => {
       deposit_mode: data.deposit_mode ? decrypt(data.deposit_mode) : null,
       amount: data.amount ? parseFloat(decrypt(data.amount)) : null,
       image_proof: data.image_proof ? decryptedImageBase64 : null, // Decrypted Base64 string
-      status: data.status ? decrypt(data.status) : null,
+      status: data.status ? data.status : null,
     };
   });
 };
