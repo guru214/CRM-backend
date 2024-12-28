@@ -6,11 +6,15 @@ import verifyToken from '../middleware/verifyToken.js'; // Adjust the path as ne
 import isEmailVerified from '../middleware/isEmailVerified.js';
 import { ChangeDepositStatus } from '../controllers/depositControllers/depositManagmentControllers.js';
 import authorizeRoles from '../middleware/authorization.js';
+import multer from 'multer'
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 const router = express.Router();
 
 // Define routes with verifyToken middleware
-router.post('/', verifyToken, isEmailVerified, submitDepositRequest);
+router.post('/', verifyToken, isEmailVerified, upload.single("image_proof"), // Handle the file upload
+submitDepositRequest);
 router.get('/', verifyToken, isEmailVerified, listDepositRequests);
 router.patch('/changeStatus',verifyToken, isEmailVerified, authorizeRoles(['superAdmin']), ChangeDepositStatus);
 

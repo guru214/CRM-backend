@@ -2,17 +2,23 @@ import { connectDB, closeDB } from "../../config/mongodb.js";
 import userProof from "../../models/userProof.js";
 import { encryptDocumentProof, decryptDocumentProof } from "../../lib/EncryptDecrypt/documentProof.js";
 import { RESPONSE_MESSAGES } from "../../lib/constants.js";
-
+import WithdrawMode from "../../models/WithdrawModeModel.js";
+import { decrypt } from "dotenv";
 // Submit a new deposit request
 const submitUserProof = async (req, res) => {
   try {
     await connectDB();
 
     const AccountID = req.user.AccountID;
-    const { AadhaarProof, NationalityProof } = req.body;
+    const AadhaarProof = req.files["AadhaarProof"]?.[0]?.buffer || null; // Path to the uploaded file
+    const NationalityProof= req.files["NationalityProof"]?.[0]?.buffer || null;
 
+    // const findUser = await WithdrawMode.findOne({AccountID})
+    // if(findUser){
+    //   res.status(400).json({message: "User proof already exist"})
+    // }
 
-    if (!AccountID || !AadhaarProof || !NationalityProof) {
+    if (!AccountID || (!AadhaarProof && !NationalityProof)) {
       return res.status(400).json({ message: "AccountID and deposit data are required." });
     }
 
@@ -49,13 +55,17 @@ const listUserProofs = async (req, res) => {
 
     const documentProof = await userProof.find({ AccountID });
 
+
     if (!documentProof || documentProof.length === 0) {
       return res.status(404).json({ message: "No deposit requests found." });
     }
 
+    // console.log(documentProof[0])
     const decryptedDocumentProof = decryptDocumentProof(documentProof);
 
     res.status(200).json(decryptedDocumentProof);
+        // res.status(200).json(documentProof);
+
   } catch (error) {
     console.error("Error listing deposit requests:", error);
     res.status(500).json({ message: "Internal server error." });

@@ -8,11 +8,14 @@ import verifyToken from "../middleware/verifyToken.js";
 import isEmailVerified from '../middleware/isEmailVerified.js';
 import { ChangeWithdrawStatus } from "../controllers/withdrawControllers/withdrawManagement.js";
 import authorizeRoles from "../middleware/authorization.js";
+import multer from 'multer'
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 const router = express.Router();
 
 // Route to submit a new withdrawal request
-router.post("/", verifyToken, isEmailVerified,  submitWithdrawRequest);
+router.post("/", verifyToken, isEmailVerified, submitWithdrawRequest);
 
 // Route to fetch withdrawal requests by AccountID
 router.get("/",verifyToken, isEmailVerified, getWithdrawRequests);

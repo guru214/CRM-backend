@@ -7,13 +7,7 @@ import { RESPONSE_MESSAGES } from "../../lib/constants.js";
 
 // Helper function to encrypt deposit request data
 const encryptDepositReq = (depositData) => {
-  if (!fs.existsSync(depositData.image_proof)) {
-    throw new Error(`Image proof file not found at path: ${depositData.image_proof}`);
-  }
-
-  const imageBuffer = fs.readFileSync(depositData.image_proof); // Read image file as buffer
-  const imageBase64 = imageBuffer.toString("base64"); // Convert image to Base64 string
-
+  const imageBase64 = depositData.image_proof.toString("base64"); // Convert buffer to Base64 string
   return {
     deposit_mode: depositData.deposit_mode ? encrypt(depositData.deposit_mode) : null,
     amount: depositData.amount ? encrypt(depositData.amount.toString()) : null, // Ensure amount is saved as a string
@@ -39,7 +33,9 @@ const submitDepositRequest = async (req, res) => {
     await connectDB();
 
     const AccountID = req.user.AccountID;
-    const { deposit_mode, amount, image_proof } = req.body;
+    const { deposit_mode, amount} = req.body;
+    const image_proof = req.file.buffer; // Path to the uploaded file
+
     const status = "Pending";
     // Validate request body
     if ( !deposit_mode || !amount || !image_proof) {
@@ -91,7 +87,7 @@ const listDepositRequests = async (req, res) => {
 
     const depositData = await DepositRequest.find({ AccountID });
 
-    // console.log("id is:",depositData[0].id);
+    // console.log(decrypt(depositData[0].image_proof));
     if (!depositData || depositData.length === 0) {
       return res.status(404).json({ message: "No deposit requests found." });
     }

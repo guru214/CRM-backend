@@ -4,12 +4,36 @@ import dotenv from "dotenv";
 import { encrypt } from "../../lib/EncryptDecrypt/encryptDecrypt.js";
 import { generateAccountID, generateReferralID } from "../../lib/uidGeneration.js";
 import { RESPONSE_MESSAGES } from "../../lib/constants.js";
-import { encryptPassword, generateRandomString } from "../../lib/EncryptDecrypt/passwordEncryptDecrypt.js"
+// import { encryptPassword, generateRandomString } from "../../lib/EncryptDecrypt/passwordEncryptDecrypt.js"
 import User from "../../models/User.js";
 import crypto from 'crypto';
 import { openConnection, closeConnection } from "../../config/sqlconnection.js";
 
 dotenv.config(); // Load environment variables
+
+
+// AES-GCM encryption configuration 
+const algorithm = 'aes-256-gcm';
+const secretKey = Buffer.from(process.env.SECRET_KEY, 'hex');  // Use secret key from .env 
+
+// Encryption Function 
+const encryptPassword = (text, iv) => {
+  const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
+  let encrypted = cipher.update(text, 'utf-8', 'hex');
+  encrypted += cipher.final('hex');
+  const authTag = cipher.getAuthTag().toString('hex');
+  return `${iv}:${encrypted}:${authTag};`
+};
+
+const generateRandomString = (length) => {
+  const characters = 'f01a23b45c67d89e'; // Define the character set
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    result += characters[randomIndex];
+  }
+  return result;
+};
 
 // Function to generate tokens
 const generateTokens = (userId, Email, AccountID, Role) => {
