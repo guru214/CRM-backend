@@ -20,12 +20,11 @@ app.use(cookieParser());
 app.use(morgan('dev'));
 app.use(express.json());
 
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://localhost:3000'); // Allow the frontend origin
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH');
-  res.header('Access-Control-Allow-Credentials', 'true'); // Allow credentials (cookies) to be sent
-  next();
-});
+app.use(cors({
+  origin: 'https://localhost:3000', // Allow only the frontend URL
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  credentials: true,
+}));
 
 
 app.use(openSequelizeConnection); 
