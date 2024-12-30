@@ -153,7 +153,7 @@ const Login = async (req, res) => {
 
       //should be ued in production level
       secure: true, // Use secure cookies in production 
-      sameSite: 'Strict',  // Prevent CSRF attacks  
+      sameSite: 'Lax',  // Prevent CSRF attacks  
       //should be ued in local
       // secure: false,       // Set to true if using HTTPS
       // sameSite: 'None',    // Allows cross-origin cookies
@@ -164,7 +164,7 @@ const Login = async (req, res) => {
       httpOnly: true,
       //should be ued in production level
       secure: true, // Use secure cookies in production 
-      sameSite: 'Strict', // Prevent CSRF attacks    
+      sameSite: 'Lax', // Prevent CSRF attacks    
       //should be ued in local
       // secure: false,       // Set to true if using HTTPS
       // sameSite: 'None',    // Allows cross-origin cookies
