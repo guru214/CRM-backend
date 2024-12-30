@@ -22,9 +22,10 @@ app.use(express.json());
 
 app.use(cors({
   origin: 'http://localhost:3000', // Allow only the frontend URL
-  // methods: 'GET, POST, PUT, DELETE',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   credentials: true,
 }));
+
 
 app.use(openSequelizeConnection); 
 app.use(closeSequelizeConnection); // Close connection middleware
@@ -46,11 +47,6 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send({ message: "Something went wrong!" });
 });
-sequelize.authenticate().then(()=>{
-  console.log("The sql connection is eatblished!")
-}).catch((err)=>{
-  console.log("Error establishing sql connection:",err)
-})
    
 // Listen to the server after DB connection
 app.listen(PORT, () => {

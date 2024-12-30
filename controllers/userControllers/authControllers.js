@@ -144,13 +144,16 @@ const Login = async (req, res) => {
       { refreshToken: refreshToken },
       { where: { id: Finduser.id } }
     );
+
+    const isProduction = process.env.NODE_ENV === 'production';
+
     // Set the access token as a cookie (HTTP-only cookie for security)
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
 
       //should be ued in production level
-      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production 
-      sameSite: 'Strict', // Prevent CSRF attacks  
+      secure: isProduction, // Use secure cookies in production 
+      sameSite: isProduction ? 'Strict' : 'None',  // Prevent CSRF attacks  
       //should be ued in local
       // secure: false,       // Set to true if using HTTPS
       // sameSite: 'None',    // Allows cross-origin cookies
@@ -160,8 +163,8 @@ const Login = async (req, res) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       //should be ued in production level
-      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production 
-      sameSite: 'Strict', // Prevent CSRF attacks    
+      secure: isProduction, // Use secure cookies in production 
+      sameSite: isProduction ? 'Strict' : 'None', // Prevent CSRF attacks    
       //should be ued in local
       // secure: false,       // Set to true if using HTTPS
       // sameSite: 'None',    // Allows cross-origin cookies
