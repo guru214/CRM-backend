@@ -152,8 +152,8 @@ const Login = async (req, res) => {
       httpOnly: true,
 
       //should be ued in production level
-      secure: isProduction, // Use secure cookies in production 
-      sameSite: isProduction ? 'Strict' : 'None',  // Prevent CSRF attacks  
+      secure: true, // Use secure cookies in production 
+      sameSite: 'Strict',  // Prevent CSRF attacks  
       //should be ued in local
       // secure: false,       // Set to true if using HTTPS
       // sameSite: 'None',    // Allows cross-origin cookies
@@ -163,8 +163,8 @@ const Login = async (req, res) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       //should be ued in production level
-      secure: isProduction, // Use secure cookies in production 
-      sameSite: isProduction ? 'Strict' : 'None', // Prevent CSRF attacks    
+      secure: true, // Use secure cookies in production 
+      sameSite: 'Strict', // Prevent CSRF attacks    
       //should be ued in local
       // secure: false,       // Set to true if using HTTPS
       // sameSite: 'None',    // Allows cross-origin cookies
