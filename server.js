@@ -8,6 +8,8 @@ import ReqDeposit from './routes/ReqDepositRoutes.js';
 import UserProof from './routes/userProofRoutes.js';
 import cookieParser from 'cookie-parser';
 import { sequelize } from './config/sqlconnection.js';
+import http from 'http';
+import https from 'https';
 import Refresh from './routes/refreshTokenRoute.js';
 import cors from 'cors';
 import { openSequelizeConnection, closeSequelizeConnection} from './config/sqldb.js'
@@ -19,6 +21,14 @@ const PORT =  process.env.PORT || 4040;
 app.use(cookieParser());
 app.use(morgan('dev'));
 app.use(express.json());
+
+// app.use((req, res, next) => {
+//   if (req.secure) {
+//     return next();  // Request is already secure
+//   }
+//   // Redirect to HTTPS
+//   res.redirect('https://' + req.headers.host + req.url);
+// });
 
 app.use(cors({
   origin: 'https://localhost:3000', // Allow only the frontend URL
@@ -42,6 +52,9 @@ app.get('/', (req,res)=>{
    res.json("This is the basic api")
 });
 
+// Start the HTTP server (only for redirection)
+// const httpServer = http.createServer(app);
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -52,3 +65,8 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+// httpServer.listen(80, () => {
+//   console.log('Redirecting HTTP to HTTPS...');
+// });
+
+
