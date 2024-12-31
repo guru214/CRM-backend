@@ -36,7 +36,7 @@ const generateRandomString = (length) => {
 };
 
 // Function to generate tokens
-const generateTokens = (userId, Email, AccountID, Role) => {
+const generateTokens = (userId, Email, AccountID, Role, isEmailVerified) => {
   const accessToken = jwt.sign({ userId, Email, AccountID, Role, isEmailVerified }, process.env.JWT_SECRET, { expiresIn: "60m" });
   const refreshToken = jwt.sign({ userId, Email, AccountID, Role, isEmailVerified }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
   return { accessToken, refreshToken };
