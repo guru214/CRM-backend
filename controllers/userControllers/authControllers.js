@@ -146,6 +146,8 @@ const Login = async (req, res) => {
       { where: { id: Finduser.id } }
     );
 
+    const isProduction = process.env.NODE_ENV === 'production';
+
     // Set the access token as a cookie (HTTP-only cookie for security)
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
@@ -180,8 +182,8 @@ const Login = async (req, res) => {
     return res.status(200).json({
       message: "Login successful",
       // user: decryptedUserData,
-      Role,
       isEmailVerified,
+      Role,
       accessToken,
       refreshToken,
     });
@@ -260,4 +262,3 @@ const Logout = async (req, res) => {
 };
 
 export { Register, Login, verifyEmail, Logout };
-
