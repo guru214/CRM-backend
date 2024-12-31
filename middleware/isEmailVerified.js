@@ -23,7 +23,7 @@ const isEmailVerified = async (req, res, next) => {
           expiresIn: "10m",
         });
     
-        const emailVerifyLink = `http://localhost:3000/verifyEmail/${emailVerifyToken}`;
+        const emailVerifyLink = `https://crm-backend-onw8.onrender.com/verifyEmail/${emailVerifyToken}`;
     
         // Configure Nodemailer transporter
         const transporter = nodemailer.createTransport({
