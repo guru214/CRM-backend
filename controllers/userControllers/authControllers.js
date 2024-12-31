@@ -139,13 +139,12 @@ const Login = async (req, res) => {
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(Finduser.id, Finduser.Email, Finduser.AccountID, Finduser.Role);
     const Role = Finduser.Role
+    const isEmailVerified = Finduser.isEmailVerified;
     // Update the refresh token in the database
     await User.update(
       { refreshToken: refreshToken },
       { where: { id: Finduser.id } }
     );
-
-    const isProduction = process.env.NODE_ENV === 'production';
 
     // Set the access token as a cookie (HTTP-only cookie for security)
     res.cookie("accessToken", accessToken, {
@@ -182,6 +181,7 @@ const Login = async (req, res) => {
       message: "Login successful",
       // user: decryptedUserData,
       Role,
+      isEmailVerified,
       accessToken,
       refreshToken,
     });
