@@ -37,8 +37,8 @@ const generateRandomString = (length) => {
 
 // Function to generate tokens
 const generateTokens = (userId, Email, AccountID, Role) => {
-  const accessToken = jwt.sign({ userId, Email, AccountID, Role }, process.env.JWT_SECRET, { expiresIn: "60m" });
-  const refreshToken = jwt.sign({ userId, Email, AccountID, Role }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
+  const accessToken = jwt.sign({ userId, Email, AccountID, Role, isEmailVerified }, process.env.JWT_SECRET, { expiresIn: "60m" });
+  const refreshToken = jwt.sign({ userId, Email, AccountID, Role, isEmailVerified }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
   return { accessToken, refreshToken };
 };
 
@@ -137,7 +137,7 @@ const Login = async (req, res) => {
       return res.status(401).json({ message: RESPONSE_MESSAGES.INVALID.message });
     }
     // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(Finduser.id, Finduser.Email, Finduser.AccountID, Finduser.Role);
+    const { accessToken, refreshToken } = generateTokens(Finduser.id, Finduser.Email, Finduser.AccountID, Finduser.Role, Finduser.isEmailVerified);
     const Role = Finduser.Role
     const isEmailVerified = Finduser.isEmailVerified;
     // Update the refresh token in the database
