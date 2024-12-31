@@ -97,6 +97,7 @@ const updateWithdrawDetails = async (req, res) => {
       return res.status(404).json({ message: "Withdraw details not found for this AccountID" });
     }
 
+    await updatedWithdrawMode.save();
     return res.status(200).json({ message: "Withdraw details updated successfully", updatedWithdrawMode });
   } catch (error) {
     console.error("Error during withdraw update:", error);
