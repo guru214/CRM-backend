@@ -37,6 +37,7 @@ const Profile = async (req, res) => {
     const decryptedUserData = decryptUserData(user);
     decryptedUserData.AccountID = user.AccountID; // Ensure IDs remain unchanged
     decryptedUserData.ReferralID = user.ReferralID;
+    decryptedUserData.isEmailVerified = user.isEmailVerified;
     return res.json(decryptedUserData);
   } catch (error) {
     console.error("Error fetching user profile:", error);
