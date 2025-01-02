@@ -24,7 +24,7 @@ const Profile = async (req, res) => {
         "AccountID",
         "ReferralID",
         "amount",
-        'isEmailVerified",
+        "isEmailVerified",
 
       ],
     });
