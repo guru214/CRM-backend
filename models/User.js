@@ -20,9 +20,10 @@ User.init(
       unique: true,
     },
     isEmailVerified: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },    
     Password: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -71,7 +72,7 @@ User.init(
       allowNull: true,
     },
     refreshToken: {
-      type: DataTypes.STRING(512),
+      type: DataTypes.STRING(1024),
       allowNull: true,
     },
   },

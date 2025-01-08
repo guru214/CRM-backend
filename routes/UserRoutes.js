@@ -1,5 +1,5 @@
 import express from "express";
-import { Login, Register, verifyEmail, Logout } from "../controllers/userControllers/authControllers.js";
+import { Login, Register, verifyEmail, Logout, sendEmailToVerify, isAuthenticated } from "../controllers/userControllers/authControllers.js";
 import {Profile, UpdateProfile} from '../controllers/userControllers/profileControllers.js'
 import { ChangePassword, ForgetPassword, ResetPassword } from "../controllers/userControllers/userPasswordControllers.js";
 import { ChangeRole, DeleteUser, GetUsers, GetUsersAndAdmins, KYCUpdate } from "../controllers/userControllers/userManagementControllers.js";
@@ -13,6 +13,12 @@ router.post("/register", Register);
 
 // Login route
 router.post("/login", Login);
+
+//is Authentic
+router.get('/isLoggedin', verifyToken, isAuthenticated);
+
+//send link
+router.post('/sendVerificationLink', verifyToken, sendEmailToVerify);
 
 //VerifyEmail route
 router.post("/verifyEmail/:token", verifyToken, verifyEmail);

@@ -18,38 +18,9 @@ const isEmailVerified = async (req, res, next) => {
     }
 
     // Check if the user's email is verified
-    if (user.isEmailVerified !== "Yes") {
-        const emailVerifyToken = jwt.sign({ Email: userEmail }, process.env.JWT_SECRET_KEY, {
-          expiresIn: "10m",
-        });
-    
-        const emailVerifyLink = `https://localhost:3000/verifyEmail/${emailVerifyToken}`;
-    
-        // Configure Nodemailer transporter
-        const transporter = nodemailer.createTransport({
-          service: "gmail",
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-          },
-        });
-    
-        // Mail options
-        const mailOptions = {
-          from: process.env.EMAIL_USER,
-          to: userEmail,
-          subject: "Email Verification Request",
-          text: `Click the link to verify your Email: ${emailVerifyLink}`,
-        };
-    
-        // Send the email
-        await transporter.sendMail(mailOptions);
-    
-        // Respond with success message
-        return res
-          .status(200)
-          .json({ message: "Email link sent to email." });
-      }
+    if (user.isEmailVerified !== true) {
+      return res.status(403).json({ message: "please verify your email." });
+    }
     next(); // Proceed to the next middleware or route handler
   } catch (error) {
     console.error("Error in email verification middleware:", error);

@@ -1,9 +1,12 @@
 import jwt from "jsonwebtoken";
+import { decrypt } from "../lib/EncryptDecrypt/encryptDecrypt.js";
 
 const verifyToken = (req, res, next) => {
   try {
     console.log(req.cookies);
-    const token = req.cookies?.accessToken ;
+    const encryptedToken = req.cookies?.accessToken ;
+    const token = decrypt(encryptedToken);
+    console.log("DecryptedToken", token)
     // || req.headers.authorization?.split(" ")[1];
 
     if (!token) {

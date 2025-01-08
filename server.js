@@ -10,10 +10,18 @@ import cookieParser from 'cookie-parser';
 import { sequelize } from './config/sqlconnection.js';
 import Refresh from './routes/refreshTokenRoute.js';
 import cors from 'cors';
+import https from 'https';
+import fs from 'fs';
 import { openSequelizeConnection, closeSequelizeConnection} from './config/sqldb.js'
 const app = express();
 dotenv.config();
-const PORT =  process.env.PORT || 4040;
+const port =  process.env.PORT || 4040;
+
+// Reading certificates
+const options = {
+  key: fs.readFileSync('./certs/localhost-key.pem'),
+  cert: fs.readFileSync('./certs/localhost.pem')
+};
 
 // Middlewares
 app.use(cookieParser());
@@ -47,8 +55,8 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send({ message: "Something went wrong!" });
 });
-   
-// Listen to the server after DB connection
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+
+// Creating HTTPS server
+https.createServer(options, app).listen(port, () => {
+  console.log(`HTTPS server running at https://localhost:${port}`);
 });

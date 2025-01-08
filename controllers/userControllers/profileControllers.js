@@ -11,7 +11,7 @@ const Profile = async (req, res) => {
   try {
     await openConnection();
     const id = req.user.userId; // Extract user ID from the request (e.g., from middleware)
-
+    
     // Query the user while excluding sensitive fields
     const user = await User.findOne({
       where: { id: id },

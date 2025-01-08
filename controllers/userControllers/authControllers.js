@@ -1,13 +1,15 @@
 
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { encrypt } from "../../lib/EncryptDecrypt/encryptDecrypt.js";
+import { encrypt, decrypt } from "../../lib/EncryptDecrypt/encryptDecrypt.js";
 import { generateAccountID, generateReferralID } from "../../lib/uidGeneration.js";
 import { RESPONSE_MESSAGES } from "../../lib/constants.js";
 // import { encryptPassword, generateRandomString } from "../../lib/EncryptDecrypt/passwordEncryptDecrypt.js"
 import User from "../../models/User.js";
 import crypto from 'crypto';
 import { openConnection, closeConnection } from "../../config/sqlconnection.js";
+import {jwtDecode} from 'jwt-decode';
+import nodemailer from 'nodemailer';
 
 dotenv.config(); // Load environment variables
 
@@ -39,7 +41,10 @@ const generateRandomString = (length) => {
 const generateTokens = (userId, Email, AccountID, Role, isEmailVerified) => {
   const accessToken = jwt.sign({ userId, Email, AccountID, Role, isEmailVerified }, process.env.JWT_SECRET, { expiresIn: "60m" });
   const refreshToken = jwt.sign({ userId, Email, AccountID, Role, isEmailVerified }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
-  return { accessToken, refreshToken };
+
+  const encryptedAccessToken = encrypt(accessToken);
+  const encryptedRefreshToken = encrypt(refreshToken);
+  return { encryptedAccessToken,  encryptedRefreshToken };
 };
 
 // Function to encrypt user data
@@ -79,7 +84,6 @@ const Register = async (req, res) => {
     // const Roles = ['user', 'admin', 'superadmin'];
     const Role = 'User';
     const KYC_Status = 'Pending';
-    const isEmailVerified = 'No';
     const amount = "0.00";
     const encryptedAmount = encrypt(amount);
     const newUser = await User.create({
@@ -96,7 +100,6 @@ const Register = async (req, res) => {
       AccountID: AccountID,
       ReferralID: ReferralID,
       Role: Role,
-      isEmailVerified: isEmailVerified,
       iv: securedIv,
     });
     if (newUser) {
@@ -105,7 +108,7 @@ const Register = async (req, res) => {
       res.status(500).json({ message: "Failed to register user" });
     }
   } catch (error) {
-    // console.error("Error during user registration:", error);
+    console.error("Error during user registration:", error);
     res.status(500).json({ message: "Internal server error" });
   } finally {
     await closeConnection();
@@ -137,55 +140,52 @@ const Login = async (req, res) => {
       return res.status(401).json({ message: RESPONSE_MESSAGES.INVALID.message });
     }
     // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(Finduser.id, Finduser.Email, Finduser.AccountID, Finduser.Role, Finduser.isEmailVerified);
+    const { encryptedAccessToken, encryptedRefreshToken } = generateTokens(Finduser.id, Finduser.Email, Finduser.AccountID, Finduser.Role, Finduser.isEmailVerified);
     const Role = Finduser.Role
     const isEmailVerified = Finduser.isEmailVerified;
     // Update the refresh token in the database
     await User.update(
-      { refreshToken: refreshToken },
+      { refreshToken: encryptedRefreshToken },
       { where: { id: Finduser.id } }
     );
 
     const isProduction = process.env.NODE_ENV === 'production';
 
-    // Set the access token as a cookie (HTTP-only cookie for security)
-    res.cookie("accessToken", accessToken, {
+    res.cookie("accessToken", encryptedAccessToken, {
       httpOnly: true,
-
       //should be ued in production level
       secure: true, // Use secure cookies in production 
       sameSite: 'None',  // Prevent CSRF attacks  
-      //should be ued in local
-      // secure: false,       // Set to true if using HTTPS
-      // sameSite: 'None',    // Allows cross-origin cookies
-      maxAge: 60 * 60 * 1000, // 1 hour
+      path: '/',
+      maxAge: 60 * 60 * 1000, // 24 hour
     });
-    // Optionally, set the refresh token as a cookie (HTTP-only cookie for security)
-    res.cookie("refreshToken", refreshToken, {
+  
+    res.cookie("refreshToken", encryptedRefreshToken, {
       httpOnly: true,
       //should be ued in production level
       secure: true, // Use secure cookies in production 
       sameSite: 'None', // Prevent CSRF attacks    
+      path: '/',
       //should be ued in local
       // secure: false,       // Set to true if using HTTPS
       // sameSite: 'None',    // Allows cross-origin cookies
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    // res.cookie('token', token, {
-    //   httpOnly: true,      // Prevents access via JavaScript
-    //   secure: false,       // Set to true if using HTTPS
-    //   sameSite: 'None',    // Allows cross-origin cookies
-    // Decrypt user data if necessary
-    // const decryptedUserData = decryptUserData(Finduser);
-    // console.log('d ::d',decryptedUserData);
+    if(isEmailVerified === false){
+      return res.status(403).json({message: "Please verify your email."})
+    }
+
+    
     return res.status(200).json({
       message: "Login successful",
       // user: decryptedUserData,
       isEmailVerified,
       Role,
-      accessToken,
-      refreshToken,
+      // accessToken,
+      encryptedAccessToken,
+      // refreshToken,
+      encryptedRefreshToken,
     });
   } catch (error) {
     console.error("Error during user login:", error);
@@ -194,6 +194,52 @@ const Login = async (req, res) => {
     await closeConnection();
   }
 };
+
+// Endpoint to check if the user is authenticated
+const isAuthenticated = async (req, res) => {
+  return res.status(200).json({ message: 'User is authenticated' });
+};
+
+const sendEmailToVerify = async (req, res) => {
+  try {
+    const userEmail = req.user.Email;
+
+    // Generate the email verification token
+    const emailVerifyToken = jwt.sign({ Email: userEmail }, process.env.JWT_SECRET_KEY, {
+      expiresIn: "10m",
+    });
+
+    // Create the email verification link
+    const emailVerifyLink = `https://localhost:3000/verifyEmail/${emailVerifyToken}`;
+
+    // Configure Nodemailer transporter
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    // Mail options
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: userEmail,
+      subject: "Email Verification Request",
+      text: `Click the link to verify your Email: ${emailVerifyLink}`,
+    };
+
+    // Send the email
+    await transporter.sendMail(mailOptions);
+
+    // Respond with success message
+    return res.status(200).json({ message: "Email link sent to email." });
+  } catch (error) {
+    console.error('Error sending verification email:', error);
+    return res.status(500).json({ message: "Failed to send email." });
+  }
+};
+
 
 const verifyEmail = async (req, res, next) => {
   try {
@@ -205,12 +251,12 @@ const verifyEmail = async (req, res, next) => {
 
     const verifyUser = await User.findOne({ where: { Email: decoded.Email } });
 
-    // const updateIsEmailVerified = verifyUser.isEmailVerified;
-    const isEmailVerified = "Yes";
-    // const emailVerified =
-    await verifyUser.update({ isEmailVerified: isEmailVerified })
-    // await emailVerified.save();
-    res.status(200).json({ message: "Your Email has been verified successfully." });
+    if (verifyUser) {
+      await verifyUser.update({ isEmailVerified: true });
+      res.status(200).json({ message: "Your Email has been verified successfully." });
+    } else {
+      res.status(404).json({ message: "User not found." });
+    }
   }
   catch (error) {
     console.error("error in verifying email:", error)
@@ -236,8 +282,9 @@ const Logout = async (req, res) => {
     if (!refreshToken) {
       return res.status(400).json({ message: "No token provided" });
     }
+    const decryptedRefreshToken = decrypt(refreshToken)
     // Verify the refresh token
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    const decoded = jwt.verify(decryptedRefreshToken, process.env.JWT_REFRESH_SECRET);
     if (!decoded) {
       return res.status(401).json({ message: "Invalid token" });
     }
@@ -261,4 +308,4 @@ const Logout = async (req, res) => {
   }
 };
 
-export { Register, Login, verifyEmail, Logout };
+export { Register, Login, isAuthenticated, sendEmailToVerify, verifyEmail, Logout };
