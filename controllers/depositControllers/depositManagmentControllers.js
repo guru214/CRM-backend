@@ -83,5 +83,37 @@ const ChangeDepositStatus = async (req, res) => {
   };
   
   
-
-export { ChangeDepositStatus };
+  const GetAllDepositRequests = async (req, res) => {
+    try {
+      await openConnection();
+      await connectDB();
+      
+      // Retrieve all deposit requests
+      const depositRequests = await DepositRequest.find({});
+      
+      // Check if there are no deposit requests
+      if (!depositRequests || depositRequests.length === 0) {
+        return res.status(404).json({ message: "No deposit requests found." });
+      }
+  
+      // Decrypt withdraw_mode and amount for each request
+      const decryptedDepositRequests = depositRequests.map((request) => {
+        return {
+          ...request.toObject(), // Convert the mongoose document to a plain object
+          deposit_mode: decrypt(request.deposit_mode),
+          image_proof: decrypt(request.image_proof),
+          amount: decrypt(request.amount), // Decrypt the amount
+        };
+      });
+  
+      return res.status(200).json({ depositRequests: decryptedDepositRequests });
+    } catch (error) {
+      console.error("Error fetching deposit requests:", error);
+      return res.status(500).json({ message: "Internal server error." });
+    } finally {
+      await closeConnection();
+      await closeDB();
+    }
+  };
+  
+  export { GetAllDepositRequests, ChangeDepositStatus };

@@ -16,7 +16,7 @@ const GetUsers = async (req, res) => {
     };
     res.status(201).json(GetUsers);
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" }, error);
+    res.status(500).json({ message: "Internal server error" });
   } finally {
     await closeConnection();
   }
@@ -31,7 +31,7 @@ const GetUsersAndAdmins = async ( req, res) => {
     };
     res.status(201).json(GetUsers);
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" }, error);
+    res.status(500).json({ message: "Internal server error" });
   } finally {
     await closeConnection();
   }
@@ -56,7 +56,7 @@ const ChangeRole = async (req, res) => { //change role to 'admin' or to 'user'
     res.status(200).json(updatedUser);
   }
   catch (error) {
-    res.status(500).json({ message: "Internal server error." }, error)
+    res.status(500).json({ message: "Internal server error." })
 
   } finally {
     await closeConnection();
@@ -83,7 +83,7 @@ const KYCUpdate = async (req, res) => {
   }
   catch (error) {
     console.log(error)
-    res.status(500).json({ message: "Internal server error.",  error });
+    res.status(500).json({ message: "Internal server error." });
 
   } finally {
     await closeConnection();

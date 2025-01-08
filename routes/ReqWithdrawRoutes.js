@@ -6,7 +6,7 @@ import {
 } from "../controllers/withdrawControllers/ReqWithdrawControllers.js";
 import verifyToken from "../middleware/verifyToken.js";
 import isEmailVerified from '../middleware/isEmailVerified.js';
-import { ChangeWithdrawStatus } from "../controllers/withdrawControllers/withdrawManagement.js";
+import { ChangeWithdrawStatus, GetAllWithdrawRequests } from "../controllers/withdrawControllers/withdrawManagement.js";
 import authorizeRoles from "../middleware/authorization.js";
 import multer from 'multer'
 const storage = multer.memoryStorage();
@@ -22,6 +22,8 @@ router.get("/",verifyToken, isEmailVerified, getWithdrawRequests);
 
 // Route to delete a withdrawal request by ID
 router.delete("/:id",verifyToken, isEmailVerified, cancelWithdrawRequest);
+
+router.get('/getAllWithdrawalReq',verifyToken, isEmailVerified, authorizeRoles(['superAdmin']), GetAllWithdrawRequests);
 
 //Route to change the status of a withdrawal
 router.patch('/changeStatus',verifyToken, isEmailVerified, authorizeRoles(['superAdmin']), ChangeWithdrawStatus);

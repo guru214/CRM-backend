@@ -24,7 +24,7 @@ const decryptWithdrawReq = (encryptedWithdrawData) => {
 // Submit a new withdrawal request
 const submitWithdrawRequest = async (req, res) => {
   try {
-    await connectDB();
+    // await connectDB();
     const AccountID  = req.user.AccountID;
     const { withdraw_mode, amount } = req.body;
     const status = "Pending";
@@ -46,31 +46,6 @@ const submitWithdrawRequest = async (req, res) => {
     }
 
     const encryptedWithdrawData = encryptWithdrawReq({withdraw_mode, amount});
-
-    //This code should be at the Admin Route 
-    // // Fetch the user's balance
-    // const user = await User.findOne({
-    //   where: { AccountID: AccountID }
-    // });
-
-    // console.log("user balance", user)
-    // if (!user) {
-    //   return res.status(404).json({ message: "Account not found" });
-    // }
-
-    // const currentBalance = parseFloat(decrypt(user.amount)); 
-    // console.log(currentBalance);
-    // console.log(amount);
-    // if (currentBalance < amount) {
-    //   return res.status(400).json({ message: "Insufficient balance" });
-    // }
-    // const userBalance = currentBalance - amount;
-    // console.log(userBalance)
-    // user.amount = encrypt(userBalance.toString());
-
-    // await user.save();
-    // console.log("saved")
-    // Create the withdrawal request
     const submitWithdrawData = new withdrawRequest({
       AccountID,
       ...encryptedWithdrawData,
@@ -83,14 +58,14 @@ const submitWithdrawRequest = async (req, res) => {
     console.error("Error during withdrawal request submission:", err);
     return res.status(500).json({ message: "Internal server error" });
   } finally {
-    await closeDB();
+    // await closeDB();
   }
 };
 
   // Fetch withdrawal requests by AccountID
   const getWithdrawRequests = async (req, res) => {
     try {
-      await connectDB();
+      // await connectDB();
       const AccountID = req.user.AccountID;
 
       if (!AccountID) {
@@ -109,33 +84,33 @@ const submitWithdrawRequest = async (req, res) => {
       console.error("Error fetching withdrawal requests:", error);
       return res.status(500).json({ message: "Internal server error" });
     } finally {
-      await closeDB();
+      // await closeDB();
     }
   };
 
   // cancel a withdrawal request by ID
   const cancelWithdrawRequest = async (req, res) => {
-    try {
-      connectDB();
-      const { id } = req.params;
+    // try {
+    //   // connectDB();
+    //   const { id } = req.params;
 
-      if (!id) {
-        return res.status(400).json({ message: "ID is required" });
-      }
+    //   if (!id) {
+    //     return res.status(400).json({ message: "ID is required" });
+    //   }
 
-      const result = await withdrawRequest.findOneAndDelete({_id: id})
+    //   const result = await withdrawRequest.findOneAndDelete({_id: id})
 
-      if (result) {
-        return res.status(200).json({ message: "Withdrawal request canceled successfully" });
-      } else {
-        return res.status(404).json({ message: "Withdrawal request not found" });
-      }
-    } catch (error) {
-      console.error("Error deleting withdrawal request:", error);
-      return res.status(500).json({ message: "Internal server error" });
-    } finally {
-      await closeDB();
-    }
+    //   if (result) {
+    //     return res.status(200).json({ message: "Withdrawal request canceled successfully" });
+    //   } else {
+    //     return res.status(404).json({ message: "Withdrawal request not found" });
+    //   }
+    // } catch (error) {
+    //   console.error("Error deleting withdrawal request:", error);
+    //   return res.status(500).json({ message: "Internal server error" });
+    // } finally {
+    //   await closeDB();
+    // }
   };
 
   export {

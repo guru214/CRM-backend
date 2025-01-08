@@ -2,7 +2,6 @@ import express from "express";
 import 
 { 
     submitWithdrawDetails,
-    updateWithdrawDetails, 
     getWithdrawDetails 
 } from "../controllers/withdrawControllers/WithdrawDetailsControllers.js"; // Assuming controller is in 'controllers' folder
 import verifyToken from "../middleware/verifyToken.js";
@@ -14,7 +13,7 @@ const router = express.Router();
 router.post("/",verifyToken, isEmailVerified, submitWithdrawDetails);
 
 // Route to update Withdraw details
-router.put("/",verifyToken, isEmailVerified, updateWithdrawDetails);
+// router.put("/",verifyToken, isEmailVerified, updateWithdrawDetails);
 
 // Route to get Withdraw details by AccountID
 router.get("/",verifyToken, isEmailVerified, getWithdrawDetails);

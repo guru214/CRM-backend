@@ -40,70 +40,53 @@ const decryptWithdrawData = (encryptedData) => {
 // Submit Withdraw Details
 const submitWithdrawDetails = async (req, res) => {
   try {
-    await connectDB();
     const AccountID = req.user.AccountID;
-    const {  withdrawData } = req.body;
-    console.log(withdrawData)
-    console.log(AccountID)
+    const { withdrawData } = req.body;
 
-    const findUser = await WithdrawMode.findOne({AccountID});
-    if(findUser){
-      console.log(findUser)
+    console.log(withdrawData);
+    console.log(AccountID);
 
-      return res.status(400).json({message:"Withdraw details already exist."})
-    }
     // Encrypt withdraw data
     const encryptedWithdrawData = encryptWithdrawData(withdrawData);
-    // Create and save new withdraw mode record
-    const newWithdrawMode = new WithdrawMode({
-      AccountID,
-      ...encryptedWithdrawData,
-    });
 
-    await newWithdrawMode.save();
+    // Check if the user already has withdraw details
+    const findUser = await WithdrawMode.findOne({ AccountID });
 
-    return res.status(201).json({ message: "Withdraw details submitted successfully" });
-  } catch (error) {
-    console.error("Error during withdraw submission:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  } finally {
-    await closeDB();
-  }
-};
-
-// Update Withdraw Details
-const updateWithdrawDetails = async (req, res) => {
-  try {
-    await connectDB();
-    const AccountID = req.user.AccountID;
-    const updates = encryptWithdrawData(req.body); // Encrypt incoming data
-
-    const updateFields = {};
-    for (const key in updates) {
-      if (updates[key] !== null) {
-        updateFields[key] = updates[key];
+    if (findUser) {
+      // If withdraw details exist, update the existing record
+      const updateFields = {};
+      for (const key in encryptedWithdrawData) {
+        if (encryptedWithdrawData[key] !== null) {
+          updateFields[key] = encryptedWithdrawData[key];
+        }
       }
+
+      // Find and update the withdraw details using $set operator
+      const updatedWithdrawMode = await WithdrawMode.findOneAndUpdate(
+        { AccountID },
+        { $set: updateFields },
+        { new: true } // Return the updated document
+      );
+
+      if (!updatedWithdrawMode) {
+        return res.status(404).json({ message: "Withdraw details not found for this AccountID" });
+      }
+
+      return res.status(200).json({ message: "Withdraw details updated successfully", updatedWithdrawMode });
+    } else {
+      // If withdraw details do not exist, create a new record
+      const newWithdrawMode = new WithdrawMode({
+        AccountID,
+        ...encryptedWithdrawData,
+      });
+
+      await newWithdrawMode.save();
+
+      return res.status(201).json({ message: "Withdraw details submitted successfully" });
     }
-
-    // Encrypt the updated withdraw data
-    // Find and update the withdraw details using $set operator
-    const updatedWithdrawMode = await WithdrawMode.findOneAndUpdate(
-      { AccountID },
-      { $set: updateFields },
-      { new: true } // Return the updated document
-    );
-
-    if (!updatedWithdrawMode) {
-      return res.status(404).json({ message: "Withdraw details not found for this AccountID" });
-    }
-
-    await updatedWithdrawMode.save();
-    return res.status(200).json({ message: "Withdraw details updated successfully", updatedWithdrawMode });
   } catch (error) {
-    console.error("Error during withdraw update:", error);
+    console.error("Error during withdraw submit or update:", error);
     return res.status(500).json({ message: "Internal server error" });
-  } finally {
-    await closeDB();
   }
 };
 
@@ -111,7 +94,7 @@ const updateWithdrawDetails = async (req, res) => {
 // Get Withdraw Details
 const getWithdrawDetails = async (req, res) => {
   try {
-    await connectDB();
+    // await connectDB();
     const AccountID = req.user.AccountID;
 
     // Find withdraw details by AccountID
@@ -131,9 +114,9 @@ const getWithdrawDetails = async (req, res) => {
     console.error("Error fetching withdraw details:", error);
     return res.status(500).json({ message: "Internal server error" });
   } finally {
-    await closeDB();
+    // await closeDB();
   }
 };
 
-export {  submitWithdrawDetails, updateWithdrawDetails, getWithdrawDetails };
+export {  submitWithdrawDetails, getWithdrawDetails };
  

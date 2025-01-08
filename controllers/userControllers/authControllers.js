@@ -200,6 +200,14 @@ const isAuthenticated = async (req, res) => {
   return res.status(200).json({ message: 'User is authenticated' });
 };
 
+const isSuperAdmin = async (req, res) => {
+  const role = req.user.Role;
+  if(role === 'superAdmin'){
+  return res.status(200).json({ message: 'User is authenticated' });
+  }
+  return res.status(403).json({message: "you dont have authority to access this."})
+};
+
 const sendEmailToVerify = async (req, res) => {
   try {
     const userEmail = req.user.Email;
@@ -308,4 +316,4 @@ const Logout = async (req, res) => {
   }
 };
 
-export { Register, Login, isAuthenticated, sendEmailToVerify, verifyEmail, Logout };
+export { Register, Login, isAuthenticated, isSuperAdmin, sendEmailToVerify, verifyEmail, Logout };

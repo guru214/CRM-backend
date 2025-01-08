@@ -13,6 +13,8 @@ import cors from 'cors';
 import https from 'https';
 import fs from 'fs';
 import { openSequelizeConnection, closeSequelizeConnection} from './config/sqldb.js'
+import { connectDB, closeDB } from './config/mongodb.js';
+
 const app = express();
 dotenv.config();
 const port =  process.env.PORT || 4040;
@@ -37,6 +39,14 @@ app.use(cors({
 
 app.use(openSequelizeConnection); 
 app.use(closeSequelizeConnection); // Close connection middleware
+
+connectDB();
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  await closeDB();
+  process.exit(0);
+});
 
 // Routes
 app.use('/api/v1/auth', AuthRoutes);

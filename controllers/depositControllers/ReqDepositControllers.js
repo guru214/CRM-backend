@@ -30,7 +30,7 @@ const decryptDepositReq = (encryptedDepositData) => {
 
 const submitDepositRequest = async (req, res) => {
   try {
-    await connectDB();
+    // await connectDB();
 
     const AccountID = req.user.AccountID;
     const { deposit_mode, amount} = req.body;
@@ -69,7 +69,7 @@ const submitDepositRequest = async (req, res) => {
     console.error("Error submitting deposit request:", error);
     return res.status(500).json({ message: "Internal server error." });
   } finally {
-    await closeDB();
+    // await closeDB();
   }
 };
 
@@ -77,7 +77,7 @@ const submitDepositRequest = async (req, res) => {
 // List all deposit requests for a given AccountID
 const listDepositRequests = async (req, res) => {
   try {
-    await connectDB();
+    // await connectDB();
 
     const AccountID = req.user.AccountID;
 
@@ -99,7 +99,7 @@ const listDepositRequests = async (req, res) => {
     console.error("Error listing deposit requests:", error);
     res.status(500).json({ message: "Internal server error." });
   } finally {
-    await closeDB();
+    // await closeDB();
   }
 };
 

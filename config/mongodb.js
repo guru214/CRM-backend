@@ -1,14 +1,12 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+
 dotenv.config(); // Load environment variables
 
 const connectDB = async () => {
   try {
-    
     const mongoURI = process.env.MONGO_URL; // Access the MONGO_URL from .env
-    console.log(mongoURI)
-   
-
+    console.log(`Connecting to MongoDB at ${mongoURI}`);
     await mongoose.connect(mongoURI);
     console.log("MongoDB Connected Successfully!");
   } catch (err) {
@@ -17,15 +15,14 @@ const connectDB = async () => {
   }
 };
 
-const closeDB = async() =>{
-  try{
-    mongoose.connection.close();
-    console.log("mongo connection closed!")
+// Handle application shutdown gracefully
+const closeDB = async () => {
+  try {
+    await mongoose.connection.close();
+    console.log("MongoDB connection closed!");
+  } catch (err) {
+    console.error("Error closing MongoDB connection:", err.message);
   }
-  catch(err){
-    console.error("error closing the mongoDB:", err.message);
-  }
-}
-export { connectDB, closeDB};
+};
 
- 
+export { connectDB, closeDB };

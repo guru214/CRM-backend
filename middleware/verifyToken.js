@@ -3,10 +3,10 @@ import { decrypt } from "../lib/EncryptDecrypt/encryptDecrypt.js";
 
 const verifyToken = (req, res, next) => {
   try {
-    console.log(req.cookies);
+    // console.log(req.cookies);
     const encryptedToken = req.cookies?.accessToken ;
     const token = decrypt(encryptedToken);
-    console.log("DecryptedToken", token)
+    // console.log("DecryptedToken", token)
     // || req.headers.authorization?.split(" ")[1];
 
     if (!token) {
@@ -20,7 +20,7 @@ const verifyToken = (req, res, next) => {
       }
 
       req.user = decoded; // Contains `userId` or other payload data
-      console.log(req.user)
+      // console.log(req.user)
       next();
     });
   } catch (error) {

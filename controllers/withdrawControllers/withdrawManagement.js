@@ -81,7 +81,37 @@ const ChangeWithdrawStatus = async (req, res) => {
       await closeDB();
     }
   };
+  const GetAllWithdrawRequests = async (req, res) => {
+    try {
+      await openConnection();
+      await connectDB();
+      
+      // Retrieve all withdraw requests
+      const withdrawRequests = await withdrawRequest.find({});
+      
+      // Check if there are no withdraw requests
+      if (!withdrawRequests || withdrawRequests.length === 0) {
+        return res.status(404).json({ message: "No withdraw requests found." });
+      }
   
+      // Decrypt withdraw_mode and amount for each request
+      const decryptedWithdrawRequests = withdrawRequests.map((request) => {
+        return {
+          ...request.toObject(), // Convert the mongoose document to a plain object
+          withdraw_mode: decrypt(request.withdraw_mode),
+          amount: decrypt(request.amount)
+        };
+      });
   
+      return res.status(200).json({ withdrawRequests: decryptedWithdrawRequests });
+    } catch (error) {
+      console.error("Error fetching withdraw requests:", error);
+      return res.status(500).json({ message: "Internal server error." });
+    } finally {
+      await closeConnection();
+      await closeDB();
+    }
+  };
 
-export { ChangeWithdrawStatus };
+
+export { GetAllWithdrawRequests, ChangeWithdrawStatus };
