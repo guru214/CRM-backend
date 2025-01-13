@@ -230,7 +230,7 @@ const sendEmailToVerify = async (req, res) => {
     });
 
     // Create the email verification link
-    const emailVerifyLink = `https://localhost:3000/verifyEmail/${emailVerifyToken}`;
+    const emailVerifyLink = `https://crmrichessesolutions.vercel.app/verifyEmail/${emailVerifyToken}`;
 
     // Configure Nodemailer transporter
     const transporter = nodemailer.createTransport({

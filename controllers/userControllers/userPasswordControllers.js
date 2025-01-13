@@ -99,7 +99,7 @@ const ForgetPassword = async (req, res) => {
       expiresIn: "10m",
     });
 
-    const resetLink = `http://localhost:3000/resetPassword/${resetToken}`;
+    const resetLink = `https://crmrichessesolutions.vercel.app/resetPassword/${resetToken}`;
 
     // Configure Nodemailer transporter
     const transporter = nodemailer.createTransport({
