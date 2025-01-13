@@ -5,6 +5,7 @@ import AuthRoutes from './routes/UserRoutes.js';
 import WithdrawDetails from './routes/WithdrawDetailsRoutes.js';
 import ReqWithdraw from './routes/ReqWithdrawRoutes.js';
 import ReqDeposit from './routes/ReqDepositRoutes.js';
+import Returns from './routes/ReturnRoutes.js';
 import UserProof from './routes/userProofRoutes.js';
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
@@ -79,6 +80,7 @@ app.use('/api/v1/withdrawDetails', WithdrawDetails);
 app.use('/api/v1/withdraw', ReqWithdraw);
 app.use('/api/v1/deposit', ReqDeposit);
 app.use('/api/v1/userProof', UserProof);
+app.use('/api/v1', Returns);
 
 app.get('/', (req,res)=>{
    res.json("This is the basic api")
