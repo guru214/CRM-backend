@@ -104,11 +104,8 @@ const listDepositRequests = async (req, res) => {
 };
 
 
-// List all deposit requests for a given AccountID
 const approvedDepositRequests = async (req, res) => {
   try {
-    // await connectDB();
-
     const AccountID = req.user.AccountID;
 
     if (!AccountID) {
@@ -116,21 +113,27 @@ const approvedDepositRequests = async (req, res) => {
     }
 
     const depositData = await DepositRequest.find({ AccountID, status: "Approved" });
-console.log(depositData)
-    // console.log(decrypt(depositData[0].image_proof));
+
     if (!depositData || depositData.length === 0) {
       return res.status(404).json({ message: "No deposit requests found." });
     }
 
+    // Decrypt deposit data if necessary
     const decryptedDepositData = decryptDepositReq(depositData);
 
-    res.status(200).json(decryptedDepositData);
+    // Calculate total investment amount
+    const totalInvestment = decryptedDepositData.reduce((sum, deposit) => sum + deposit.amount, 0);
+
+    // Send response with total investment included
+    res.status(200).json({
+      Investment: totalInvestment,
+      deposits: decryptedDepositData,
+    });
   } catch (error) {
     console.error("Error listing deposit requests:", error);
     res.status(500).json({ message: "Internal server error." });
-  } finally {
-    // await closeDB();
   }
 };
+
 
 export { submitDepositRequest, approvedDepositRequests, listDepositRequests };

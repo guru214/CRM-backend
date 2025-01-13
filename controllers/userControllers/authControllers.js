@@ -293,35 +293,46 @@ const verifyEmail = async (req, res, next) => {
   }
 };
 
-// Logout Function
 const Logout = async (req, res) => {
   try {
     await openConnection();
     const { refreshToken } = req.cookies;
+
     // Check if the refresh token is provided
     if (!refreshToken) {
       return res.status(400).json({ message: "No token provided" });
     }
-    const decryptedRefreshToken = decrypt(refreshToken)
-    // Verify the refresh token
-    const decoded = jwt.verify(decryptedRefreshToken, process.env.JWT_REFRESH_SECRET);
-    if (!decoded) {
-      return res.status(401).json({ message: "Invalid token" });
+
+    let decryptedRefreshToken;
+    try {
+      decryptedRefreshToken = decrypt(refreshToken);
+    } catch (err) {
+      return res.status(400).json({ message: "Failed to decrypt token" });
     }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(decryptedRefreshToken, process.env.JWT_REFRESH_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: "Invalid or expired token" });
+    }
+
     // Find the user using the decoded user ID from the refresh token
     const Finduser = await User.findOne({ where: { id: decoded.userId } });
     if (!Finduser) {
       return res.status(404).json({ message: "User not found" });
     }
+
     // Update the user's refresh token to NULL
     await Finduser.update({ refreshToken: null });
-    // Clear cookies
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+
+    // Clear cookies with same options as when they were set
+    res.clearCookie("accessToken", { httpOnly: true, secure: true, sameSite: "Strict" });
+    res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
 
     return res.status(200).json({ message: "Logout successful" });
   } catch (error) {
-    // console.error("Error during logout:", error);
+    console.error("Error during logout:", error);
     return res.status(500).json({ message: "Internal server error" });
   } finally {
     await closeConnection();

@@ -1,7 +1,7 @@
 import User from '../../models/User.js';
-import monthlyReturns from '../../models/monthlyReturns.js';
+import MonthlyReturns from '../../models/monthlyReturns.js';
 import { encrypt, decrypt } from '../../lib/EncryptDecrypt/encryptDecrypt.js';
-
+import DepositRequest from '../../models/DepositRequest.js';
 const createReturns = async (req, res) => {
     try {
         const { AccountID, date, returnAmount, returnPercentage } = req.body;
@@ -21,16 +21,23 @@ const createReturns = async (req, res) => {
             return res.status(404).json({ error: 'User not found.' });
         }
 
-        const actualAmount = decrypt(userRecord.amount); // Decrypt user's amount
+        // Retrieve the user's total investment from deposit records
+        const depositData = await DepositRequest.find({ AccountID, status: "Approved" });
+        if (!depositData || depositData.length === 0) {
+            return res.status(404).json({ error: 'No approved deposits found for the user.' });
+        }
 
-        let calculatedReturnAmount = returnAmount.toString();
+        const totalInvestment = depositData.reduce((sum, deposit) => sum + parseFloat(deposit.amount), 0);
+
+        let calculatedReturnAmount = returnAmount;
         let calculatedReturnPercentage = returnPercentage;
 
         // Calculate missing value if one is provided
         if (returnAmount && !returnPercentage) {
-            calculatedReturnPercentage = (returnAmount / actualAmount) * 100;
+            calculatedReturnPercentage = (returnAmount / totalInvestment) * 100;
         } else if (returnPercentage && !returnAmount) {
-            calculatedReturnAmount = (returnPercentage / 100) * actualAmount;
+            calculatedReturnAmount = (returnPercentage / 100) * totalInvestment;
+            calculatedReturnAmount = calculatedReturnAmount.toString();
         }
 
         // Ensure the calculated values are valid numbers
@@ -39,7 +46,7 @@ const createReturns = async (req, res) => {
         }
 
         // Check for duplicate entry for the same month and year
-        const existingReturn = await monthlyReturns.findOne({
+        const existingReturn = await MonthlyReturns.findOne({
             AccountID: AccountID,
             'returns.date': {
                 $gte: new Date(new Date(date).setDate(1)),
@@ -53,10 +60,7 @@ const createReturns = async (req, res) => {
 
         // Decrypt the user's existing amount, update it, and encrypt the new amount
         const existingUserAmount = parseFloat(decrypt(userRecord.amount));
-        console.log(existingUserAmount)
-        console.log(parseFloat(calculatedReturnAmount))
         const updatedAmount = existingUserAmount + parseFloat(calculatedReturnAmount);
-        console.log(updatedAmount)
         userRecord.amount = encrypt(updatedAmount.toString()); // Encrypt the updated amount
 
         // Create a new monthly return entry
@@ -68,7 +72,7 @@ const createReturns = async (req, res) => {
         };
 
         // Update the user's monthly returns array
-        const updatedReturn = await monthlyReturns.findOneAndUpdate(
+        const updatedReturn = await MonthlyReturns.findOneAndUpdate(
             { AccountID: AccountID },
             { $push: { returns: newReturn } },
             { new: true, upsert: true }
@@ -83,12 +87,13 @@ const createReturns = async (req, res) => {
     }
 };
 
+
 const getReturns = async (req, res) => {
     try {
         const AccountID = req.user.AccountID; // Assuming the user is authenticated and AccountID is available in req.user
 
         // Fetch the user's monthly returns
-        const userReturns = await monthlyReturns.findOne({ AccountID: AccountID });
+        const userReturns = await MonthlyReturns.findOne({ AccountID: AccountID });
 
         if (!userReturns) {
             return res.status(404).json({ error: 'No returns found' });
@@ -112,7 +117,7 @@ const getReturns = async (req, res) => {
 const listAllReturns = async (req, res) => {
     try {
         // Fetch all returns for all users
-        const allReturns = await monthlyReturns.find();
+        const allReturns = await MonthlyReturns.find();
 
         if (!allReturns || allReturns.length === 0) {
             return res.status(404).json({ error: 'No returns found.' });
