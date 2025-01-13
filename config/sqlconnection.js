@@ -10,7 +10,7 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
   logging: false,
   port: process.env.DB_PORT,
   waitForConnections: true,
-  connectionLimit: 20,  // Limit the number of simultaneous connections
+  connectionLimit: 10,  // Limit the number of simultaneous connections
   queueLimit: 0,
   pool: {
     max: 500, // maximum number of connections
