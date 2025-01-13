@@ -1,5 +1,5 @@
 import User from '../../models/User.js';
-import monthlyReturns from '../../models/monthlyReturns.js';
+import MonthlyReturns from '../../models/monthlyReturns.js';
 import { encrypt, decrypt } from '../../lib/EncryptDecrypt/encryptDecrypt.js';
 
 const createReturns = async (req, res) => {
@@ -39,7 +39,7 @@ const createReturns = async (req, res) => {
         }
 
         // Check for duplicate entry for the same month and year
-        const existingReturn = await monthlyReturns.findOne({
+        const existingReturn = await MonthlyReturns.findOne({
             AccountID: AccountID,
             'returns.date': {
                 $gte: new Date(new Date(date).setDate(1)),
@@ -68,7 +68,7 @@ const createReturns = async (req, res) => {
         };
 
         // Update the user's monthly returns array
-        const updatedReturn = await monthlyReturns.findOneAndUpdate(
+        const updatedReturn = await MonthlyReturns.findOneAndUpdate(
             { AccountID: AccountID },
             { $push: { returns: newReturn } },
             { new: true, upsert: true }
@@ -88,7 +88,7 @@ const getReturns = async (req, res) => {
         const AccountID = req.user.AccountID; // Assuming the user is authenticated and AccountID is available in req.user
 
         // Fetch the user's monthly returns
-        const userReturns = await monthlyReturns.findOne({ AccountID: AccountID });
+        const userReturns = await MonthlyReturns.findOne({ AccountID: AccountID });
 
         if (!userReturns) {
             return res.status(404).json({ error: 'No returns found' });
@@ -112,7 +112,7 @@ const getReturns = async (req, res) => {
 const listAllReturns = async (req, res) => {
     try {
         // Fetch all returns for all users
-        const allReturns = await monthlyReturns.find();
+        const allReturns = await MonthlyReturns.find();
 
         if (!allReturns || allReturns.length === 0) {
             return res.status(404).json({ error: 'No returns found.' });
