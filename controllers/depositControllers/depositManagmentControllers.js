@@ -9,7 +9,7 @@ import { closeConnection, openConnection } from "../../config/sqlconnection.js";
 const ChangeDepositStatus = async (req, res) => {
     try {
       await openConnection();
-      await connectDB();
+      // await connectDB();
       const { AccountID, id, status } = req.body;
   
       // Check for missing fields
@@ -78,7 +78,7 @@ const ChangeDepositStatus = async (req, res) => {
       return res.status(500).json({ message: "Internal server error." });
     } finally {
       await closeConnection();
-      await closeDB();
+      // await closeDB();
     }
   };
   
@@ -86,7 +86,7 @@ const ChangeDepositStatus = async (req, res) => {
   const GetAllDepositRequests = async (req, res) => {
     try {
       await openConnection();
-      await connectDB();
+      // await connectDB();
       
       // Retrieve all deposit requests
       const depositRequests = await DepositRequest.find({});
@@ -112,7 +112,7 @@ const ChangeDepositStatus = async (req, res) => {
       return res.status(500).json({ message: "Internal server error." });
     } finally {
       await closeConnection();
-      await closeDB();
+      // await closeDB();
     }
   };
   

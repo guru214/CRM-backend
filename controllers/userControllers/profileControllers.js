@@ -24,6 +24,7 @@ const Profile = async (req, res) => {
         "AccountID",
         "ReferralID",
         "amount",
+        "KYC_Status",
         "isEmailVerified",
 
       ],
@@ -37,7 +38,8 @@ const Profile = async (req, res) => {
     const decryptedUserData = decryptUserData(user);
     decryptedUserData.AccountID = user.AccountID; // Ensure IDs remain unchanged
     decryptedUserData.ReferralID = user.ReferralID;
-    decryptedUserData.isEmailVerified = user.isEmailVerified;
+    decryptedUserData.KYC_Status = user.KYC_Status;
+    decryptedUserData.isEmailVerified = Boolean(user.isEmailVerified);
     return res.json(decryptedUserData);
   } catch (error) {
     console.error("Error fetching user profile:", error);

@@ -9,6 +9,9 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
   dialect: 'mysql',
   logging: false,
   port: process.env.DB_PORT,
+  waitForConnections: true,
+  connectionLimit: 10,  // Limit the number of simultaneous connections
+  queueLimit: 0,
   pool: {
     max: 500, // maximum number of connections
     min: 0,  // minimum number of connections

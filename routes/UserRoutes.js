@@ -15,10 +15,10 @@ router.post("/register", Register);
 router.post("/login", Login);
 
 //is Authentic
-router.get('/isLoggedin', verifyToken, isAuthenticated);
+router.get('/isLoggedin', verifyToken, isEmailVerified, isAuthenticated);
 
 
-router.get('/isAdmin', verifyToken, isSuperAdmin);
+router.get('/isAdmin', verifyToken, isEmailVerified, authorizeRoles(['superAdmin']), isSuperAdmin);
 
 //send link
 router.post('/sendVerificationLink', verifyToken, sendEmailToVerify);

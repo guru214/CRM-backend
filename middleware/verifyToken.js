@@ -5,6 +5,9 @@ const verifyToken = (req, res, next) => {
   try {
     // console.log(req.cookies);
     const encryptedToken = req.cookies?.accessToken ;
+    if(!encryptedToken){
+      res.status(401).json({message: "Unauthorized"})
+    }
     const token = decrypt(encryptedToken);
     // console.log("DecryptedToken", token)
     // || req.headers.authorization?.split(" ")[1];

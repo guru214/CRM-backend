@@ -6,7 +6,7 @@ import {
 } from "../controllers/withdrawControllers/ReqWithdrawControllers.js";
 import verifyToken from "../middleware/verifyToken.js";
 import isEmailVerified from '../middleware/isEmailVerified.js';
-import { ChangeWithdrawStatus, GetAllWithdrawRequests } from "../controllers/withdrawControllers/withdrawManagement.js";
+import { ChangeWithdrawStatus, GetAllWithdrawRequests, listAllWithdrawRequests } from "../controllers/withdrawControllers/withdrawManagement.js";
 import authorizeRoles from "../middleware/authorization.js";
 import multer from 'multer'
 const storage = multer.memoryStorage();
@@ -28,5 +28,6 @@ router.get('/getAllWithdrawalReq',verifyToken, isEmailVerified, authorizeRoles([
 //Route to change the status of a withdrawal
 router.patch('/changeStatus',verifyToken, isEmailVerified, authorizeRoles(['superAdmin']), ChangeWithdrawStatus);
 
+router.get('/listAllWithdrawModes', verifyToken, isEmailVerified, authorizeRoles(['superAdmin']), listAllWithdrawRequests);
 
 export default router;

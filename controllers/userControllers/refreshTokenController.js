@@ -9,7 +9,7 @@ const RefreshToken = async (req, res) => {
     const { refreshToken } = req.cookies;
 
     if (!refreshToken) {
-      return res.status(401).json({ message: "Refresh token is required" });
+      return res.status(403).json({ message: "Refresh token is required" });
     }
 
     const decryptedRefreshToken = decrypt(refreshToken)
@@ -23,9 +23,9 @@ const RefreshToken = async (req, res) => {
       const { userId, Email, AccountID, Role, isEmailVerified } = decoded;
 
       // Generate a new access token
-      const newAccessToken = jwt.sign({ userId, Email, AccountID, Role, isEmailVerified }, process.env.JWT_SECRET, { expiresIn: "60m" });
+      const accessToken = jwt.sign({ userId, Email, AccountID, Role, isEmailVerified }, process.env.JWT_SECRET, { expiresIn: "60m" });
 
-      const encryptedNewAccessToken = encrypt(newAccessToken);
+      const encryptedNewAccessToken = encrypt(accessToken);
       // Set the new access token as a cookie
       res.cookie("accessToken", encryptedNewAccessToken, {
         httpOnly: true,

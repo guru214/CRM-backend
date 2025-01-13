@@ -6,14 +6,15 @@ import WithdrawDetails from './routes/WithdrawDetailsRoutes.js';
 import ReqWithdraw from './routes/ReqWithdrawRoutes.js';
 import ReqDeposit from './routes/ReqDepositRoutes.js';
 import UserProof from './routes/userProofRoutes.js';
+import Returns from './routes/ReturnRoutes.js';
 import cookieParser from 'cookie-parser';
-import { sequelize } from './config/sqlconnection.js';
+import mongoose from 'mongoose';
 import Refresh from './routes/refreshTokenRoute.js';
 import cors from 'cors';
 import https from 'https';
 import fs from 'fs';
 import { openSequelizeConnection, closeSequelizeConnection} from './config/sqldb.js'
-import { connectDB, closeDB } from './config/mongodb.js';
+// import { connectDB, closeDB } from './config/mongodb.js';
 
 const app = express();
 dotenv.config();
@@ -40,11 +41,44 @@ app.use(cors({
 app.use(openSequelizeConnection); 
 app.use(closeSequelizeConnection); // Close connection middleware
 
-connectDB();
 
-// Graceful shutdown
+// MongoDB connection middleware
+const connectMongoDB = async () => {
+  try {
+    const mongoURI = process.env.MONGO_URL; // Access the MONGO_URL from .env
+    console.log(`Connecting to MongoDB at ${mongoURI}`);
+    await mongoose.connect(mongoURI);
+    console.log('MongoDB Connected Successfully!');
+  } catch (err) {
+    console.error('Error connecting to MongoDB:', err.message);
+    process.exit(1); // Exit the process if connection fails
+  }
+};
+
+app.use(async (req, res, next) => {
+  try {
+    if (mongoose.connection.readyState === 0) {
+      console.log('Reconnecting to MongoDB...');
+      await connectMongoDB();
+    }
+    next();
+  } catch (error) {
+    console.error('Error ensuring MongoDB connection:', error.message);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 process.on('SIGINT', async () => {
-  await closeDB();
+  console.log('SIGINT received. Closing MongoDB connection...');
+  await mongoose.connection.close();
+  console.log('MongoDB connection closed.');
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received. Closing MongoDB connection...');
+  await mongoose.connection.close();
+  console.log('MongoDB connection closed.');
   process.exit(0);
 });
 
@@ -55,6 +89,7 @@ app.use('/api/v1/withdrawDetails', WithdrawDetails);
 app.use('/api/v1/withdraw', ReqWithdraw);
 app.use('/api/v1/deposit', ReqDeposit);
 app.use('/api/v1/userProof', UserProof);
+app.use('/api/v1', Returns);
 
 app.get('/', (req,res)=>{
    res.json("This is the basic api")

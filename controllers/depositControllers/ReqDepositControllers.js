@@ -103,4 +103,34 @@ const listDepositRequests = async (req, res) => {
   }
 };
 
-export { submitDepositRequest, listDepositRequests };
+
+// List all deposit requests for a given AccountID
+const approvedDepositRequests = async (req, res) => {
+  try {
+    // await connectDB();
+
+    const AccountID = req.user.AccountID;
+
+    if (!AccountID) {
+      return res.status(400).json({ message: "AccountID is required." });
+    }
+
+    const depositData = await DepositRequest.find({ AccountID, status: "Approved" });
+console.log(depositData)
+    // console.log(decrypt(depositData[0].image_proof));
+    if (!depositData || depositData.length === 0) {
+      return res.status(404).json({ message: "No deposit requests found." });
+    }
+
+    const decryptedDepositData = decryptDepositReq(depositData);
+
+    res.status(200).json(decryptedDepositData);
+  } catch (error) {
+    console.error("Error listing deposit requests:", error);
+    res.status(500).json({ message: "Internal server error." });
+  } finally {
+    // await closeDB();
+  }
+};
+
+export { submitDepositRequest, approvedDepositRequests, listDepositRequests };

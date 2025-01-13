@@ -8,7 +8,7 @@ import { RESPONSE_MESSAGES } from "../../lib/constants.js";
 import User from "../../models/User.js";
 import crypto from 'crypto';
 import { openConnection, closeConnection } from "../../config/sqlconnection.js";
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import nodemailer from 'nodemailer';
 
 dotenv.config(); // Load environment variables
@@ -44,7 +44,7 @@ const generateTokens = (userId, Email, AccountID, Role, isEmailVerified) => {
 
   const encryptedAccessToken = encrypt(accessToken);
   const encryptedRefreshToken = encrypt(refreshToken);
-  return { encryptedAccessToken,  encryptedRefreshToken };
+  return { encryptedAccessToken, encryptedRefreshToken };
 };
 
 // Function to encrypt user data
@@ -159,7 +159,7 @@ const Login = async (req, res) => {
       path: '/',
       maxAge: 60 * 60 * 1000, // 24 hour
     });
-  
+
     res.cookie("refreshToken", encryptedRefreshToken, {
       httpOnly: true,
       //should be ued in production level
@@ -172,11 +172,11 @@ const Login = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    if(isEmailVerified === false){
-      return res.status(403).json({message: "Please verify your email."})
+    if (isEmailVerified === false) {
+      return res.status(403).json({ message: "Please verify your email." })
     }
 
-    
+
     return res.status(200).json({
       message: "Login successful",
       // user: decryptedUserData,
@@ -197,15 +197,27 @@ const Login = async (req, res) => {
 
 // Endpoint to check if the user is authenticated
 const isAuthenticated = async (req, res) => {
-  return res.status(200).json({ message: 'User is authenticated' });
+  try {
+    await openConnection();
+    return res.status(200).json({ message: 'User is authenticated' });
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json("Error")
+  } finally {
+    await closeConnection();
+  }
 };
 
 const isSuperAdmin = async (req, res) => {
-  const role = req.user.Role;
-  if(role === 'superAdmin'){
-  return res.status(200).json({ message: 'User is authenticated' });
+  try {
+    await openConnection();
+    return res.status(200).json({ message: 'User is authenticated' });
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json("Error")
+  } finally {
+    await closeConnection();
   }
-  return res.status(403).json({message: "you dont have authority to access this."})
 };
 
 const sendEmailToVerify = async (req, res) => {
