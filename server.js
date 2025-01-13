@@ -8,24 +8,15 @@ import ReqWithdraw from './routes/ReqWithdrawRoutes.js';
 import ReqDeposit from './routes/ReqDepositRoutes.js';
 import UserProof from './routes/userProofRoutes.js';
 import Returns from './routes/ReturnRoutes.js';
-import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
+import cookieParser from 'cookie-parser';
 import Refresh from './routes/refreshTokenRoute.js';
 import cors from 'cors';
-import https from 'https';
-import fs from 'fs';
 import { openSequelizeConnection, closeSequelizeConnection} from './config/sqldb.js'
-// import { connectDB, closeDB } from './config/mongodb.js';
 
 const app = express();
 dotenv.config();
 const port =  process.env.PORT || 4040;
-
-// Reading certificates
-const options = {
-  key: fs.readFileSync('./certs/localhost-key.pem'),
-  cert: fs.readFileSync('./certs/localhost.pem')
-};
 
 // Middlewares
 app.use(cookieParser());
@@ -41,6 +32,7 @@ app.use(cors({
 
 app.use(openSequelizeConnection); 
 app.use(closeSequelizeConnection); // Close connection middleware
+
 
 // MongoDB connection middleware
 const connectMongoDB = async () => {
@@ -101,9 +93,8 @@ app.use((err, req, res, next) => {
   res.status(500).send({ message: "Something went wrong!" });
 });
 
-// Creating HTTPS server
-https.createServer(options, app).listen(port, () => {
-  console.log(`HTTPS server running at https://localhost:${port}`);
+app.listen(port, () =>{
+console.log(`Server is running on ${port}`);
 });
 
 
@@ -115,15 +106,25 @@ https.createServer(options, app).listen(port, () => {
 // import ReqWithdraw from './routes/ReqWithdrawRoutes.js';
 // import ReqDeposit from './routes/ReqDepositRoutes.js';
 // import UserProof from './routes/userProofRoutes.js';
-// import mongoose from 'mongoose';
+// import Returns from './routes/ReturnRoutes.js';
 // import cookieParser from 'cookie-parser';
+// import mongoose from 'mongoose';
 // import Refresh from './routes/refreshTokenRoute.js';
 // import cors from 'cors';
+// import https from 'https';
+// import fs from 'fs';
 // import { openSequelizeConnection, closeSequelizeConnection} from './config/sqldb.js'
+// // import { connectDB, closeDB } from './config/mongodb.js';
 
 // const app = express();
 // dotenv.config();
 // const port =  process.env.PORT || 4040;
+
+// // Reading certificates
+// const options = {
+//   key: fs.readFileSync('./certs/localhost-key.pem'),
+//   cert: fs.readFileSync('./certs/localhost.pem')
+// };
 
 // // Middlewares
 // app.use(cookieParser());
@@ -139,7 +140,6 @@ https.createServer(options, app).listen(port, () => {
 
 // app.use(openSequelizeConnection); 
 // app.use(closeSequelizeConnection); // Close connection middleware
-
 
 // // MongoDB connection middleware
 // const connectMongoDB = async () => {
@@ -188,6 +188,7 @@ https.createServer(options, app).listen(port, () => {
 // app.use('/api/v1/withdraw', ReqWithdraw);
 // app.use('/api/v1/deposit', ReqDeposit);
 // app.use('/api/v1/userProof', UserProof);
+// app.use('/api/v1', Returns);
 
 // app.get('/', (req,res)=>{
 //    res.json("This is the basic api")
@@ -199,7 +200,8 @@ https.createServer(options, app).listen(port, () => {
 //   res.status(500).send({ message: "Something went wrong!" });
 // });
 
-// app.listen(port, () =>{
-// console.log(`Server is running on ${port}`);
+// // Creating HTTPS server
+// https.createServer(options, app).listen(port, () => {
+//   console.log(`HTTPS server running at https://localhost:${port}`);
 // });
 
