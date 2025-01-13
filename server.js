@@ -22,7 +22,7 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 app.use(cors({
-  origin: ['https://crm-frontend-git-anwaar-anwaar-ansari12s-projects.vercel.app', 'https://localhost:3000'], // Allow only the frontend URL
+  origin: ['https://richesse-crm.vercel.app', 'https://localhost:3000'], // Allow only the frontend URL
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   credentials: true,
 }));
