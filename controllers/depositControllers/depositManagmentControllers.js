@@ -115,14 +115,13 @@ const ChangeDepositStatus = async (req, res) => {
       // await closeDB();
     }
   };
-
   const GetApprovedDepositRequestsAndTotalInvestment = async (req, res) => {
     try {
       await openConnection();
   
       // Retrieve approved deposit requests
       const approvedRequests = await DepositRequest.find({ status: "Approved" });
-  // console.log(approvedRequests)
+  
       // Check if there are no approved deposit requests
       if (!approvedRequests || approvedRequests.length === 0) {
         return res.status(404).json({ message: "No approved deposit requests found." });
@@ -138,23 +137,18 @@ const ChangeDepositStatus = async (req, res) => {
           userInvestments[AccountID] = {
             AccountID: AccountID,
             total_investment: 0,
-            approvedRequests: [],
           };
         }
-  
-        userInvestments[AccountID].approvedRequests.push({
-          ...request.toObject(),
-          deposit_mode: decrypt(request.deposit_mode),
-          image_proof: decrypt(request.image_proof),
-          amount: decrypt(request.amount),
-        });
   
         // Add the decrypted amount to the total investment for this user
         userInvestments[AccountID].total_investment += parseFloat(decrypt(request.amount));
       });
   
-      // Convert the grouped data to an array
-      const result = Object.values(userInvestments);
+      // Convert the grouped data to an array with only AccountID and total_investment
+      const result = Object.values(userInvestments).map(({ AccountID, total_investment }) => ({
+        AccountID,
+        total_investment,
+      }));
   
       return res.status(200).json({ userInvestments: result });
     } catch (error) {
@@ -164,6 +158,7 @@ const ChangeDepositStatus = async (req, res) => {
       await closeConnection();
     }
   };
+  
   
   
   export { GetAllDepositRequests, GetApprovedDepositRequestsAndTotalInvestment, ChangeDepositStatus };
