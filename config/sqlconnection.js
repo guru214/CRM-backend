@@ -10,10 +10,10 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
   logging: false,
   port: process.env.DB_PORT,
   waitForConnections: true,
-  connectionLimit: 400,  // Limit the number of simultaneous connections
+  connectionLimit: 600,  // Limit the number of simultaneous connections
   queueLimit: 0,
   pool: {
-    max: 500, // maximum number of connections
+    max: 1000, // maximum number of connections
     min: 0,  // minimum number of connections
     acquire: 30000, // maximum time (in ms) that pool will try to get connection before throwing error
     idle: 10000 // maximum time (in ms) that a connection can be idle before being released
