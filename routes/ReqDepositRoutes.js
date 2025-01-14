@@ -5,7 +5,7 @@ import { submitDepositRequest,
      approvedDepositRequests} from '../controllers/depositControllers/ReqDepositControllers.js'; // Adjust the path as necessary
 import verifyToken from '../middleware/verifyToken.js'; // Adjust the path as necessary
 import isEmailVerified from '../middleware/isEmailVerified.js';
-import { ChangeDepositStatus, GetAllDepositRequests } from '../controllers/depositControllers/depositManagmentControllers.js';
+import { ChangeDepositStatus, GetAllDepositRequests, GetApprovedDepositRequestsAndTotalInvestment } from '../controllers/depositControllers/depositManagmentControllers.js';
 import authorizeRoles from '../middleware/authorization.js';
 import multer from 'multer'
 const storage = multer.memoryStorage();
@@ -19,6 +19,7 @@ submitDepositRequest);
 router.get('/', verifyToken, isEmailVerified, listDepositRequests);
 router.get('/getApprovedDepositRequests', verifyToken, isEmailVerified, approvedDepositRequests);
 router.get('/getAllDepositReq',verifyToken, isEmailVerified, authorizeRoles(['superAdmin']), GetAllDepositRequests);
+router.get('/getAllApprovedDepositReq',verifyToken, isEmailVerified, authorizeRoles(['superAdmin']), GetApprovedDepositRequestsAndTotalInvestment);
 router.patch('/changeStatus',verifyToken, isEmailVerified, authorizeRoles(['superAdmin']), ChangeDepositStatus);
 
 export default router;

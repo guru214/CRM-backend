@@ -327,8 +327,8 @@ const Logout = async (req, res) => {
     await Finduser.update({ refreshToken: null });
 
     // Clear cookies with same options as when they were set
-    res.clearCookie("accessToken", { httpOnly: true, secure: true, sameSite: "Strict" });
-    res.clearCookie("refreshToken", { httpOnly: true, secure: true, sameSite: "Strict" });
+    res.clearCookie("accessToken", { httpOnly: true, secure: true});
+    res.clearCookie("refreshToken", { httpOnly: true, secure: true });
 
     return res.status(200).json({ message: "Logout successful" });
   } catch (error) {

@@ -115,5 +115,55 @@ const ChangeDepositStatus = async (req, res) => {
       // await closeDB();
     }
   };
+
+  const GetApprovedDepositRequestsAndTotalInvestment = async (req, res) => {
+    try {
+      await openConnection();
   
-  export { GetAllDepositRequests, ChangeDepositStatus };
+      // Retrieve approved deposit requests
+      const approvedRequests = await DepositRequest.find({ status: "Approved" });
+  // console.log(approvedRequests)
+      // Check if there are no approved deposit requests
+      if (!approvedRequests || approvedRequests.length === 0) {
+        return res.status(404).json({ message: "No approved deposit requests found." });
+      }
+  
+      // Group approved requests by user and calculate the total investment amount per user
+      const userInvestments = {};
+  
+      approvedRequests.forEach((request) => {
+        const AccountID = request.AccountID;
+  
+        if (!userInvestments[AccountID]) {
+          userInvestments[AccountID] = {
+            AccountID: AccountID,
+            total_investment: 0,
+            approvedRequests: [],
+          };
+        }
+  
+        userInvestments[AccountID].approvedRequests.push({
+          ...request.toObject(),
+          deposit_mode: decrypt(request.deposit_mode),
+          image_proof: decrypt(request.image_proof),
+          amount: decrypt(request.amount),
+        });
+  
+        // Add the decrypted amount to the total investment for this user
+        userInvestments[AccountID].total_investment += parseFloat(decrypt(request.amount));
+      });
+  
+      // Convert the grouped data to an array
+      const result = Object.values(userInvestments);
+  
+      return res.status(200).json({ userInvestments: result });
+    } catch (error) {
+      console.error("Error fetching approved deposit requests:", error);
+      return res.status(500).json({ message: "Internal server error." });
+    } finally {
+      await closeConnection();
+    }
+  };
+  
+  
+  export { GetAllDepositRequests, GetApprovedDepositRequestsAndTotalInvestment, ChangeDepositStatus };
