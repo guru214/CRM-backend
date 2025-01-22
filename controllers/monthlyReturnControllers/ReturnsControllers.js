@@ -27,8 +27,10 @@ const createReturns = async (req, res) => {
             return res.status(404).json({ error: 'No approved deposits found for the user.' });
         }
 
-        const totalInvestment = depositData.reduce((sum, deposit) => sum + parseFloat(deposit.amount), 0);
+        // console.log(depositData)
+        const totalInvestment = depositData.reduce((sum, deposit) => sum + parseFloat(decrypt(deposit.amount)), 0);
 
+        // console.log(totalInvestment)
         let calculatedReturnAmount = returnAmount;
         let calculatedReturnPercentage = returnPercentage;
 
@@ -40,24 +42,29 @@ const createReturns = async (req, res) => {
             calculatedReturnAmount = calculatedReturnAmount.toString();
         }
 
+        // console.log(calculatedReturnAmount)
+        // console.log(calculatedReturnPercentage)
         // Ensure the calculated values are valid numbers
         if (isNaN(calculatedReturnAmount) || isNaN(calculatedReturnPercentage)) {
             return res.status(400).json({ error: 'Invalid return amount or return percentage calculation.' });
         }
-
-        // Check for duplicate entry for the same month and year
         const existingReturn = await MonthlyReturns.findOne({
             AccountID: AccountID,
-            'returns.date': {
-                $gte: new Date(new Date(date).setDate(1)),
-                $lt: new Date(new Date(date).setMonth(new Date(date).getMonth() + 1)),
-            },
+            returns: {
+                $elemMatch: {
+                    date: {
+                        $gte: new Date(new Date(date).setMonth(new Date(date).getMonth(), 1)), // First day of the month
+                        $lt: new Date(new Date(date).setMonth(new Date(date).getMonth() + 1, 0)) // Last day of the month
+                    }
+                }
+            }
         });
-
+        
         if (existingReturn) {
-            return res.status(400).json({ error: 'Monthly return for the specified date already exists.' });
+            return res.status(400).json({ error: 'Monthly return for the specified month and year already exists.' });
         }
-
+        
+        
         // Decrypt the user's existing amount, update it, and encrypt the new amount
         const existingUserAmount = parseFloat(decrypt(userRecord.amount));
         const updatedAmount = existingUserAmount + parseFloat(calculatedReturnAmount);

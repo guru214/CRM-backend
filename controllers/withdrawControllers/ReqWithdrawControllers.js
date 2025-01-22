@@ -11,6 +11,7 @@ const encryptWithdrawReq = (withdrawData) => {
   return {
     withdraw_mode: withdrawData.withdraw_mode ? encrypt(withdrawData.withdraw_mode) : null,
     amount: withdrawData.amount? encrypt(withdrawData.amount.toString()) : null,
+    status: withdrawData.status ? withdrawData.status : null,
   };
 };
 
@@ -18,6 +19,7 @@ const decryptWithdrawReq = (encryptedWithdrawData) => {
   return encryptedWithdrawData.map((data) => ({
     withdraw_mode: data.withdraw_mode? decrypt(data.withdraw_mode) : null,
     amount: data.amount? parseFloat(decrypt(data.amount)) : null, 
+    status: data.status ? data.status : null,
   }));
 };
 
