@@ -2,6 +2,7 @@ import User from '../../models/User.js';
 import MonthlyReturns from '../../models/monthlyReturns.js';
 import { encrypt, decrypt } from '../../lib/EncryptDecrypt/encryptDecrypt.js';
 import DepositRequest from '../../models/DepositRequest.js';
+
 const createReturns = async (req, res) => {
     try {
         const { AccountID, date, returnAmount, returnPercentage } = req.body;
@@ -119,7 +120,6 @@ const getReturns = async (req, res) => {
         return res.status(500).json({ error: 'Internal server error.' });
     }
 };
-
 
 const listAllReturns = async (req, res) => {
     try {

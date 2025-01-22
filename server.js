@@ -24,7 +24,7 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 app.use(cors({
-  origin: ['https://localhost:3000','https://crmrichessesolutions.vercel.app'], // Allow only the frontend URL
+  origin: 'https://crmrichessesolutions.vercel.app', // Allow only the frontend URL
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   credentials: true,
 }));
