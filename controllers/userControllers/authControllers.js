@@ -61,7 +61,7 @@ const encryptUserData = (userData) => {
 // Register function
 const Register = async (req, res) => {
   try {
-    await openConnection();
+    // await openConnection();
     const { FullName, Email, Password, Phone, Account_Type, Address } = req.body;
     // Check if the user already exists in the database
     const existingUser = await User.findOne({ where: { Email } });
@@ -111,14 +111,14 @@ const Register = async (req, res) => {
     console.error("Error during user registration:", error);
     res.status(500).json({ message: "Internal server error" });
   } finally {
-    await closeConnection();
+    // await closeConnection();
   }
 };
 
 // Login function
 const Login = async (req, res) => {
   try {
-    await openConnection();
+    // await openConnection();
     const { Email, Password } = req.body;
     // Check if email and password are provided
     if (!Email || !Password) {
@@ -191,32 +191,32 @@ const Login = async (req, res) => {
     console.error("Error during user login:", error);
     return res.status(500).json({ message: "Internal server error" });
   } finally {
-    await closeConnection();
+    // await closeConnection();
   }
 };
 
 // Endpoint to check if the user is authenticated
 const isAuthenticated = async (req, res) => {
   try {
-    await openConnection();
+    // await openConnection();
     return res.status(200).json({ message: 'User is authenticated' });
   } catch (error) {
     console.log(error)
     return res.status(500).json("Error")
   } finally {
-    await closeConnection();
+    // await closeConnection();
   }
 };
 
 const isSuperAdmin = async (req, res) => {
   try {
-    await openConnection();
+    // await openConnection();
     return res.status(200).json({ message: 'User is authenticated' });
   } catch (error) {
     console.log(error)
     return res.status(500).json("Error")
   } finally {
-    await closeConnection();
+    // await closeConnection();
   }
 };
 
@@ -263,7 +263,7 @@ const sendEmailToVerify = async (req, res) => {
 
 const verifyEmail = async (req, res, next) => {
   try {
-    await openConnection();
+    // await openConnection();
     const { token } = req.params;
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
@@ -289,13 +289,13 @@ const verifyEmail = async (req, res, next) => {
     next(error);
   }
   finally {
-    await closeConnection();
+    // await closeConnection();
   }
 };
 
 const Logout = async (req, res) => {
   try {
-    await openConnection();
+    // await openConnection();
     const { refreshToken } = req.cookies;
 
     // Check if the refresh token is provided
@@ -335,7 +335,7 @@ const Logout = async (req, res) => {
     console.error("Error during logout:", error);
     return res.status(500).json({ message: "Internal server error" });
   } finally {
-    await closeConnection();
+    // await closeConnection();
   }
 };
 

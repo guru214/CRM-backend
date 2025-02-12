@@ -52,11 +52,11 @@ const ChangeDepositStatus = async (req, res) => {
   
         // Decrypt the user's existing amount, update it, and encrypt the new amount
         const existingUserAmount = parseFloat(decrypt(user.amount));
-        console.log(existingUserAmount);
+        // console.log(existingUserAmount);
         const depositedAmount = parseFloat(decrypt(currentDepositRequest.amount));
-        console.log(depositedAmount);
+        // console.log(depositedAmount);
         const updatedAmount = existingUserAmount + depositedAmount;
-        console.log(updatedAmount);
+        // console.log(updatedAmount);
         user.amount = encrypt(updatedAmount.toString());
   
         // Save the updated user amount

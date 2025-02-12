@@ -9,7 +9,7 @@ import { RESPONSE_MESSAGES } from "../../lib/constants.js";
 // Profile function
 const Profile = async (req, res) => {
   try {
-    await openConnection();
+    // await openConnection();
     const id = req.user.userId; // Extract user ID from the request (e.g., from middleware)
     
     // Query the user while excluding sensitive fields
@@ -45,14 +45,14 @@ const Profile = async (req, res) => {
     console.error("Error fetching user profile:", error);
     return res.status(500).json({ message: "Server error", error });
   } finally {
-    await closeConnection();
+    // await closeConnection();
   }
 };
 
 // Update Profile function
 const UpdateProfile = async (req, res) => {
   try {
-    await openConnection();
+    // await openConnection();
     const id = req.user.userId; // Ensure this comes from JWT middleware
     const updates = encryptUserData(req.body); // Encrypt incoming data
 
@@ -90,7 +90,7 @@ const UpdateProfile = async (req, res) => {
     console.error("Error updating user profile:", error);
     return res.status(500).json({ message: "Server error", error });
   } finally {
-    await closeConnection();
+    // await closeConnection();
   }
 };
 

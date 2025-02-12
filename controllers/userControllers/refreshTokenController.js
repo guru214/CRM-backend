@@ -4,7 +4,7 @@ import { openConnection, closeConnection } from '../../config/sqlconnection.js';
 import { decrypt, encrypt } from '../../lib/EncryptDecrypt/encryptDecrypt.js';
 const RefreshToken = async (req, res) => {
   try {
-    await openConnection();
+    // await openConnection();
     // Make sure you are using cookie-parser and accessing req.cookies
     const { refreshToken } = req.cookies;
 
@@ -40,7 +40,7 @@ const RefreshToken = async (req, res) => {
     console.error("Error during token refresh:", error);
     res.status(500).json({ message: "Internal server error" });
   }finally{
-    await closeConnection();
+    // await closeConnection();
   }
 };
 
